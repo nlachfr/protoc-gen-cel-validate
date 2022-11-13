@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package protocel.authorize;
+option go_package = "github.com/Neakxs/protocel/authorize";
+
+import "google/protobuf/descriptor.proto";
+import "options/options.proto";
+
+extend google.protobuf.FileOptions {
+    AuthorizeOptions file = 1145;
+}
+
+message AuthorizeOptions {
+    protocel.options.Options options = 1;
+    map<string,AuthorizeRule> rules = 2;
+}
+
+extend google.protobuf.MethodOptions {
+    AuthorizeRule method = 1145;
+}
+
+message AuthorizeRule {
+    string expr = 1;
+}

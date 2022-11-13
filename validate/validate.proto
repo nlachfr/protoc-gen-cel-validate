@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package protocel.validate;
+option go_package = "github.com/Neakxs/protocel/validate";
+
+import "google/protobuf/descriptor.proto";
+import "options/options.proto";
+
+extend google.protobuf.FileOptions {
+    ValidateOptions file = 1339;
+}
+
+message ValidateOptions {
+    protocel.options.Options options = 1;
+}
+
+extend google.protobuf.MessageOptions {
+    ValidateRule message = 1339;
+}
+
+extend google.protobuf.FieldOptions {
+    ValidateRule field = 1339;
+}
+
+message ValidateRule {
+    string expr = 1;
+}

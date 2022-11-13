@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package protocel.options;
+option go_package = "github.com/Neakxs/protocel/options";
+
+import "google/protobuf/descriptor.proto";
+
+message Options {
+    message Globals {
+        map<string, string> functions = 1;
+        map<string, string> constants = 2;
+    }
+    message Overloads {
+        message Type {
+            enum Primitive {
+                PRIMITIVE_UNSPECIFIED = 0;
+                BOOL = 1;
+                INT = 2;
+                UINT = 3;
+                DOUBLE = 4;
+                BYTES = 5;
+                STRING = 6;
+                DURATION = 7;
+                TIMESTAMP = 8;
+                ERROR = 9;
+                DYN = 10;
+                ANY = 11;
+            }
+            message Array {
+                Type type = 1;
+            }
+            message Map {
+                Type key = 1;
+                Type value = 2;
+            }
+            oneof type {
+                Primitive primitive = 1;
+                string object = 2;
+                Array array = 3;
+                Map map = 4;
+            }
+        }
+        message Function {
+            repeated Type args = 1;
+            Type result = 2;
+        }
+        map<string,Function> functions = 1;
+        map<string,Type> variables = 2;
+    }
+    Globals globals = 1;
+    Overloads overloads = 2;
+}
