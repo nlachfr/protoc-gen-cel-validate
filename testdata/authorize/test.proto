@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package testdata;
+option go_package = "github.com/Neakxs/protocel/testdata/authorize";
+
+import "google/protobuf/empty.proto";
+
+service TestService {
+    rpc Ping(PingRequest) returns (google.protobuf.Empty) {};
+}
+
+message PingRequest {
+    string ping = 1;
+}

@@ -1,0 +1,16 @@
+version: v1
+globals:
+  functions:
+    isOK: '"ok" == "ok"'
+  # constants:
+  #   name: name
+# rules:
+#   testdata.config.ConfigService.Config:
+#     expr: request.name == getString(name)
+# overloads:
+#   functions:
+#     getString:
+#       args:
+#       - primitive: STRING
+#       result:
+#         primitive: STRING

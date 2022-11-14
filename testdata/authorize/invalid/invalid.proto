@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package testdata.invalid;
+option go_package = "github.com/Neakxs/protocel/testdata/authorize/invalid";
+
+import "authorize/authorize.proto";
+import "google/protobuf/empty.proto";
+
+service InvalidService {
+    rpc Invalid(InvalidRequest) returns (google.protobuf.Empty) {
+        option (protocel.authorize.method).expr = 'request.name';
+    };
+}
+
+message InvalidRequest {
+    string name = 1;
+}

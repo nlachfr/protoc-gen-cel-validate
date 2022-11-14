@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package testdata.basic;
+option go_package = "github.com/Neakxs/protocel/testdata/authorize/basic";
+
+import "authorize/authorize.proto";
+import "google/protobuf/empty.proto";
+
+service BasicService {
+    rpc Basic(BasicRequest) returns (google.protobuf.Empty) {
+        option (protocel.authorize.method).expr = 'request.name == "name"';
+    };
+}
+
+message BasicRequest {
+    string name = 1;
+}
