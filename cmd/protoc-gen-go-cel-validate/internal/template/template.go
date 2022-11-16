@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/Neakxs/protocel/cmd/protoc-gen-go-cel-validate/internal/version"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -15,7 +16,9 @@ var tmpl string
 
 func GenerateTemplate(v *pluginpb.Version, g *protogen.GeneratedFile) (*template.Template, error) {
 	return template.New("").Funcs(template.FuncMap{
-		"PluginVersion": func() string { return "v0.0.0" },
+		"PluginVersion": func() string {
+			return fmt.Sprintf("v%d.%d.%d", version.Major, version.Minor, version.Patch)
+		},
 		"ProtocVersion": func() string {
 			return fmt.Sprintf("v%d.%d.%d", *v.Major, *v.Minor, *v.Patch)
 		},

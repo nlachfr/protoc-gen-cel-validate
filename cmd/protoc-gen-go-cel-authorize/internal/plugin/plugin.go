@@ -10,10 +10,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const PluginName = "protoc-gen-go-cel-authorize"
-
-var PluginVersion = "0.0.0"
-
 var (
 	config = flag.String("config", "", "global configuration file")
 )
