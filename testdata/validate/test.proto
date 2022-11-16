@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package testdata;
+option go_package = "github.com/Neakxs/protocel/testdata/validate";
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "testdata/validate/ref.proto";
+
+
+service TestService {
+    rpc TestRpc(TestRpcRequest) returns (google.protobuf.Empty) {};
+}
+
+message TestRpcRequest {
+    string ref = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (google.api.resource_reference).type = "testdata/Ref"
+    ];
+    Nested nested = 2;
+    google.protobuf.FieldMask fm = 3;
+}
+
+message Nested {
+    string name = 1;
+    string value = 2;
+    RefMultiple ref = 3;
+}

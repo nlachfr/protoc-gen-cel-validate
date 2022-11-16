@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package testdata.basic;
+option go_package = "github.com/Neakxs/protocel/testdata/validate/basic";
+
+import "validate/validate.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+
+service BasicService {
+    rpc Basic(BasicRequest) returns (google.protobuf.Empty) {};
+}
+
+message BasicRequest {
+    string name = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (protocel.validate.field).expr = 'name.startswith("names/")'
+    ];
+}

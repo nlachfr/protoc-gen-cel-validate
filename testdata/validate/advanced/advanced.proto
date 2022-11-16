@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package testdata.advanced;
+option go_package = "github.com/Neakxs/protocel/testdata/validate/advanced";
+
+import "validate/validate.proto";
+import "google/protobuf/empty.proto";
+
+option (protocel.validate.file) = {
+    options: {
+        globals: {
+            functions: [{
+                key: 'getName'
+                value: '"name"'
+            }]
+            constants: [{
+                key: 'name'
+                value: 'name'
+            }]
+        }
+    }
+};
+
+service AdvancedService {
+    rpc Advanced(AdvancedRequest) returns (google.protobuf.Empty) {};
+}
+
+message AdvancedRequest {
+    string name = 1 [(protocel.validate.field).expr = 'name == getName() || name == name'];
+}

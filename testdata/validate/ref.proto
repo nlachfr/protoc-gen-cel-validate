@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package testdata;
+option go_package = "github.com/Neakxs/protocel/testdata/validate";
+
+import "google/api/resource.proto";
+
+message Ref {
+    option (google.api.resource) = {
+        type: "testdata/Ref"
+        pattern: "refs/{ref}"
+        singular: "ref"
+    };
+    string name = 1;
+}
+
+message RefMultiple {
+    option (google.api.resource) = {
+        type: "testdata/RefMultiple"
+        pattern: "refs/{ref}"
+        pattern: "multiples/{mutiple}/refs/{ref}"
+        pattern: "others/refs/{ref}"
+        singular: "ref"
+    };
+    string name = 1;
+}

@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package testdata.reference;
+option go_package = "github.com/Neakxs/protocel/testdata/validate/reference";
+
+import "google/api/resource.proto";
+import "google/protobuf/empty.proto";
+
+
+service ReferenceService {
+    rpc Reference(ReferenceRequest) returns (google.protobuf.Empty) {}
+}
+
+message ReferenceRequest {
+    string ref = 1 [(google.api.resource_reference).type = "testdata.reference/Reference"];
+}
+
+message Reference {
+    option (google.api.resource) = {
+        type: "testdata.reference/Reference"
+        pattern: "refs/{ref}"
+        singular: "ref"
+    };
+    string name = 1;
+}
