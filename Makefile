@@ -3,8 +3,6 @@ PATH := $(PATH):$(GOPATH)/bin
 SHELL := env PATH=$(PATH) /bin/bash
 
 PROTOC_GEN_GO := $(GOPATH)/bin/protoc-gen-go
-PROTOC_GEN_GO_AUTHZ := $(GOPATH)/bin/protoc-gen-go-authz
-PROTOC_GEN_GO_VALIDATE := $(GOPATH)/bin/protoc-gen-go-validate
 
 PROTO := authorize/authorize.proto validate/validate.proto options/options.proto
 GENPROTO_GO := $(PROTO:.proto=.pb.go)

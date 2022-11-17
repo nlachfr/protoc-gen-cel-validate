@@ -9,7 +9,7 @@ import (
 )
 
 func NewFile(p *protogen.Plugin, f *protogen.File, c *authorize.AuthorizeOptions) *File {
-	g := p.NewGeneratedFile(f.GeneratedFilenamePrefix+".pb.authz.go", f.GoImportPath)
+	g := p.NewGeneratedFile(f.GeneratedFilenamePrefix+".pb.cel.authorize.go", f.GoImportPath)
 	cfg := &authorize.AuthorizeOptions{}
 	proto.Merge(cfg, c)
 	fileRule := proto.GetExtension(f.Desc.Options(), authorize.E_File).(*authorize.AuthorizeOptions)
