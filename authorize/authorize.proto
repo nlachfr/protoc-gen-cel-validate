@@ -7,7 +7,7 @@ import "google/protobuf/descriptor.proto";
 import "options/options.proto";
 
 extend google.protobuf.FileOptions {
-    AuthorizeOptions file = 1145;
+    AuthorizeOptions file = 1177;
 }
 
 message AuthorizeOptions {
@@ -16,7 +16,7 @@ message AuthorizeOptions {
 }
 
 extend google.protobuf.MethodOptions {
-    AuthorizeRule method = 1145;
+    AuthorizeRule method = 1177;
 }
 
 message AuthorizeRule {
