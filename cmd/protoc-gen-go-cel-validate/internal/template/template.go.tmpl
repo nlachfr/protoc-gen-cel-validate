@@ -17,7 +17,7 @@ var _{{.GoDescriptorIdent.GoName}}_rawValidateOptions = []byte{
 {{range $messageNo,$m := .Messages}}
 {{$buildValidate := false}}
 {{range $fieldNo, $f := $m.Fields }}
-	{{if $f.FieldRule}}
+	{{if or $f.FieldRule $f.HasResourceReference $f.HasFieldBehaviorRequired}}
 		{{$buildValidate = true}}
 	{{end}}
 {{end}}

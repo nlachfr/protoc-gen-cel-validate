@@ -57,7 +57,19 @@ func ValidateWithMask(ctx context.Context, m proto.Message, fm *fieldmaskpb.Fiel
 			subs := []string{}
 			for j := 0; j < len(paths); j++ {
 				if paths[j] == "" {
-					if !reflect.ValueOf(m.ProtoReflect().Get(fdesc).Interface()).IsZero() {
+					isDefaultValue := true
+					pf := m.ProtoReflect().Get(fdesc)
+					switch fdesc.Kind() {
+					case protoreflect.MessageKind:
+						if pf.Message().IsValid() {
+							isDefaultValue = false
+						}
+					default:
+						if !reflect.ValueOf(pf.Interface()).IsZero() {
+							isDefaultValue = false
+						}
+					}
+					if !isDefaultValue {
 						if pgr, ok := validationMap[fdesc.TextName()]; ok {
 							if val, _, err := pgr.ContextEval(ctx, vars); err != nil {
 								return err
