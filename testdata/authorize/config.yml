@@ -1,7 +1,8 @@
 version: v1
-globals:
-  functions:
-    isOK: '"ok" == "ok"'
+options:
+  globals:
+    functions:
+      isOK: '"ok" == "ok"'
   # constants:
   #   name: name
 # rules:

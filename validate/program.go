@@ -91,6 +91,8 @@ func buildValidatersValidateFunctionOpts(m map[string]bool, desc protoreflect.Me
 						if v, ok := value.Value().(Validater); ok {
 							if err := v.Validate(context.TODO()); err == nil {
 								return types.Bool(true)
+							} else {
+								return types.NewErr(err.Error())
 							}
 						}
 						return types.Bool(false)
@@ -122,6 +124,8 @@ func buildValidatersValidateWithMaskFunctionOpts(m map[string]bool, desc protore
 							if fm, ok := rhs.Value().(*fieldmaskpb.FieldMask); ok {
 								if err := v.ValidateWithMask(context.TODO(), fm); err == nil {
 									return types.Bool(true)
+								} else {
+									return types.NewErr(err.Error())
 								}
 							}
 						}
