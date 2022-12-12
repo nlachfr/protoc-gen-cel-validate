@@ -59,7 +59,7 @@ func TestValidateWithMask(t *testing.T) {
 					Message: &validate.TestRpcRequest{
 						Ref: "ref",
 					},
-					WantErr: true,
+					WantErr: false,
 				},
 				{
 					Name: "Fieldmask with empty struct fields",
