@@ -7,7 +7,7 @@ import "google/protobuf/descriptor.proto";
 import "options/options.proto";
 
 extend google.protobuf.FileOptions {
-    ValidateOptions file = 1339;
+    ValidateOptions file = 1178;
 }
 
 message ValidateOptions {
@@ -15,11 +15,11 @@ message ValidateOptions {
 }
 
 extend google.protobuf.MessageOptions {
-    ValidateRule message = 1339;
+    ValidateRule message = 1178;
 }
 
 extend google.protobuf.FieldOptions {
-    ValidateRule field = 1339;
+    ValidateRule field = 1178;
 }
 
 message ValidateRule {
