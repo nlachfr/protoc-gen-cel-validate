@@ -11,12 +11,15 @@ This repository is a collection of protoc plugins based on the Common Expression
 
 The only language supported is [Go](https://go.dev/).
 
+An example is located at [protocel-example](https://github.com/Neakxs/protocel-example) repository.
+
 ## Installation
 
 For installating the plugin, you can simply run the `go install` command :
 
 ```shell
 go install github.com/Neakxs/protocel/cmd/protoc-gen-go-cel-authorize
+go install github.com/Neakxs/protocel/cmd/protoc-gen-go-cel-validate
 ```
 
 The binary will be placed in your $GOBIN location.
