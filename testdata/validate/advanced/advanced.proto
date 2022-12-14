@@ -14,7 +14,7 @@ option (protocel.validate.file) = {
                 value: '"name"'
             }]
             constants: [{
-                key: 'name'
+                key: 'nameConst'
                 value: 'name'
             }]
         }
@@ -26,5 +26,5 @@ service AdvancedService {
 }
 
 message AdvancedRequest {
-    string name = 1 [(protocel.validate.field).expr = 'name == getName() || name == name'];
+    string name = 1 [(protocel.validate.field).expr = 'name == getName() || name == nameConst'];
 }

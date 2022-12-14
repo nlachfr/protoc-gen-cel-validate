@@ -215,7 +215,7 @@ func TestGenerate(t *testing.T) {
 				Patch: &i,
 			}}, Files: gs}, gs[0], nil); err != nil != tt.WantErr {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
-			} else if f.Generate(); err != nil != tt.WantErr {
+			} else if err = f.Generate(); err != nil != tt.WantErr {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 			}
 		})

@@ -12,5 +12,5 @@ service CrossrefService {
 }
 
 message CrossrefRequest {
-    testdata.basic.BasicRequest ref = 1 [(protocel.validate.field).expr = 'ref.name.startswith("names/")'];
+    testdata.basic.BasicRequest ref = 1 [(protocel.validate.field).expr = 'ref.name.startsWith("names/")'];
 }
