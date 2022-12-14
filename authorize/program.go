@@ -105,7 +105,8 @@ func buildAuthzProgram(expr string, desc protoreflect.MessageDescriptor, config 
 			envOpts = append(envOpts, cel.Macros(macros...))
 		}
 	}
-	env, err := cel.NewEnv(envOpts...)
+	envOpts = append(envOpts, options.BuildStdLib(config.Options))
+	env, err := cel.NewCustomEnv(envOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("new env error: %w", err)
 	}

@@ -50,8 +50,9 @@ func buildValidateProgram(expr string, desc protoreflect.MessageDescriptor, conf
 			envOpts = append(envOpts, cel.Macros(macros...))
 		}
 	}
+	envOpts = append(envOpts, options.BuildStdLib(config.Options, desc))
 	envOpts = append(envOpts, buildValidatersFunctions(desc)...)
-	env, err := cel.NewEnv(envOpts...)
+	env, err := cel.NewCustomEnv(envOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("new env error: %w", err)
 	}
