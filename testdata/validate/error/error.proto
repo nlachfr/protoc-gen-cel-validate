@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package testdata.error;
+option go_package = "github.com/Neakxs/protocel/testdata/validate/error";
+
+import "validate/validate.proto";
+import "google/protobuf/empty.proto";
+
+service ErrorService {
+    rpc Error(ErrorRequest) returns (google.protobuf.Empty) {};
+}
+
+message ErrorRequest {
+    string name = 1 [(protocel.validate.field).expr = 'name.shouldFail()'];
+}
