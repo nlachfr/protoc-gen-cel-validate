@@ -5,13 +5,15 @@ import (
 	"os"
 
 	"github.com/Neakxs/protocel/authorize"
+	"github.com/Neakxs/protocel/options"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"gopkg.in/yaml.v3"
 )
 
 var (
-	config = flag.String("config", "", "global configuration file")
+	config         = flag.String("config", "", "global configuration file")
+	overrideStdlib = flag.Bool("override_stdlib", false, "override stdlib when protobuf names conflict with cel")
 )
 
 func LoadConfig(config string, c *authorize.AuthorizeOptions) error {
@@ -36,6 +38,12 @@ func Run() {
 			if err := LoadConfig(*config, c); err != nil {
 				return err
 			}
+		}
+		if overrideStdlib != nil && *overrideStdlib {
+			if c.Options == nil {
+				c.Options = &options.Options{}
+			}
+			c.Options.OverrideStdlib = true
 		}
 		var files protoregistry.Files
 		for _, file := range gen.Files {
