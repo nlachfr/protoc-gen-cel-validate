@@ -6,6 +6,7 @@ import (
 	"github.com/Neakxs/protocel/testdata/validate/advanced"
 	"github.com/Neakxs/protocel/testdata/validate/basic"
 	"github.com/Neakxs/protocel/testdata/validate/crossref"
+	terror "github.com/Neakxs/protocel/testdata/validate/error"
 	"github.com/Neakxs/protocel/testdata/validate/fieldmask"
 	"github.com/Neakxs/protocel/testdata/validate/reference"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -200,6 +201,11 @@ func TestGenerate(t *testing.T) {
 			Desc:    []protoreflect.FileDescriptor{reference.File_testdata_validate_reference_reference_proto},
 			WantErr: false,
 		},
+		{
+			Name:    "Error",
+			Desc:    []protoreflect.FileDescriptor{terror.File_testdata_validate_error_error_proto},
+			WantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
@@ -209,13 +215,14 @@ func TestGenerate(t *testing.T) {
 				gs[i].GeneratedFilenamePrefix = t.TempDir()
 			}
 			var i int32 = 0
-			if f, err := NewFile(&protogen.Plugin{Request: &pluginpb.CodeGeneratorRequest{CompilerVersion: &pluginpb.Version{
+			f, err := NewFile(&protogen.Plugin{Request: &pluginpb.CodeGeneratorRequest{CompilerVersion: &pluginpb.Version{
 				Major: &i,
 				Minor: &i,
 				Patch: &i,
-			}}, Files: gs}, gs[0], nil); err != nil != tt.WantErr {
-				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
-			} else if f.Generate(); err != nil != tt.WantErr {
+			}}, Files: gs}, gs[0], nil)
+			if err != nil {
+				t.Errorf("cannot build file: %v", err)
+			} else if err = f.Generate(); err != nil != tt.WantErr {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 			}
 		})

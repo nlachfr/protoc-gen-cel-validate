@@ -13,6 +13,7 @@ service ReferenceService {
 
 message ReferenceRequest {
     string ref = 1 [(google.api.resource_reference).type = "testdata.reference/Reference"];
+    repeated string refs = 2 [(google.api.resource_reference).type = "testdata.reference/Reference"];
 }
 
 message Reference {

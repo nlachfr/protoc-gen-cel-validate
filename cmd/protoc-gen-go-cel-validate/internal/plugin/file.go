@@ -129,13 +129,21 @@ func (f *Field) HasResourceReference() bool {
 }
 
 func (f *Field) GetResourceReferenceValidate() string {
+	var regexp string
 	if ref := proto.GetExtension(f.Desc.Options(), annotations.E_ResourceReference).(*annotations.ResourceReference); ref != nil {
 		if ref.Type != "" {
 			if ref.Type != "*" {
-				return fmt.Sprintf(`%s.matches("^%s$")`, f.Desc.TextName(), f.ResourceMap[ref.Type])
+				regexp = fmt.Sprintf("^%s$", f.ResourceMap[ref.Type])
 			}
 		} else if ref.ChildType != "" {
-			return fmt.Sprintf(`%s.matches("^%s")`, f.Desc.TextName(), f.ResourceMap[ref.ChildType])
+			regexp = fmt.Sprintf("^%s", f.ResourceMap[ref.ChildType])
+		}
+	}
+	if regexp != "" {
+		if f.Desc.IsList() {
+			return fmt.Sprintf(`%s.all(s, s.matches("%s"))`, f.Desc.TextName(), regexp)
+		} else if f.Desc.Kind() == protoreflect.StringKind {
+			return fmt.Sprintf(`%s.matches("%s")`, f.Desc.TextName(), regexp)
 		}
 	}
 	return ""
