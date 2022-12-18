@@ -12,8 +12,10 @@ import (
 )
 
 var (
-	config                  = flag.String("config", "", "global configuration file")
-	stdlibOverridingEnabled = flag.Bool("stdlib_overriding_enabled", false, "override stdlib when protobuf names conflict with cel")
+	config                           = flag.String("config", "", "global configuration file")
+	stdlibOverridingEnabled          = flag.Bool("stdlib_overriding_enabled", false, "override stdlib when protobuf names conflict with cel")
+	requiredSupportDisabled          = flag.Bool("required_support_disabled", false, "disable google.protobuf.field_behavior.REQUIRED support")
+	resourceReferenceSupportDisabled = flag.Bool("resource_reference_support_disabled", false, "disable google.protobuf.resource_reference rules generation")
 )
 
 func LoadConfig(config string, c *validate.ValidateOptions) error {
@@ -46,6 +48,10 @@ func Run() {
 					c.Options = &options.Options{}
 				}
 				c.Options.StdlibOverridingEnabled = *stdlibOverridingEnabled
+			case "required_support_disabled":
+				c.RequiredSupportDisabled = *requiredSupportDisabled
+			case "resource_reference_support_disabled":
+				c.ResourceReferenceSupportDisabled = *resourceReferenceSupportDisabled
 			}
 		})
 		var files protoregistry.Files
