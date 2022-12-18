@@ -130,6 +130,9 @@ func (f *Field) HasResourceReference() bool {
 
 func (f *Field) GetResourceReferenceValidate() string {
 	var regexp string
+	if f.Config != nil && f.Config.ResourceReferenceSupportDisabled {
+		return ""
+	}
 	if ref := proto.GetExtension(f.Desc.Options(), annotations.E_ResourceReference).(*annotations.ResourceReference); ref != nil {
 		if ref.Type != "" {
 			if ref.Type != "*" {
