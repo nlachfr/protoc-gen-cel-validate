@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	config         = flag.String("config", "", "global configuration file")
-	overrideStdlib = flag.Bool("override_stdlib", false, "override stdlib when protobuf names conflict with cel")
+	config                  = flag.String("config", "", "global configuration file")
+	stdlibOverridingEnabled = flag.Bool("stdlib_overriding_enabled", false, "override stdlib when protobuf names conflict with cel")
 )
 
 func LoadConfig(config string, c *validate.ValidateOptions) error {
@@ -39,12 +39,15 @@ func Run() {
 				return err
 			}
 		}
-		if overrideStdlib != nil && *overrideStdlib {
-			if c.Options == nil {
-				c.Options = &options.Options{}
+		flag.Visit(func(f *flag.Flag) {
+			switch f.Name {
+			case "stdlib_overriding_enabled":
+				if c.Options == nil {
+					c.Options = &options.Options{}
+				}
+				c.Options.StdlibOverridingEnabled = *stdlibOverridingEnabled
 			}
-			c.Options.OverrideStdlib = true
-		}
+		})
 		var files protoregistry.Files
 		for _, file := range gen.Files {
 			if err := files.RegisterFile(file.Desc); err != nil {

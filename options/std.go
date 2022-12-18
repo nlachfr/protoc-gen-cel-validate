@@ -9,7 +9,7 @@ import (
 )
 
 func BuildStdLib(options *Options, descs ...protoreflect.MessageDescriptor) cel.EnvOption {
-	if options != nil && options.OverrideStdlib {
+	if options != nil && options.StdlibOverridingEnabled {
 		reservedNames := map[string]bool{}
 		if options.Globals != nil {
 			for k, _ := range options.Globals.Constants {
