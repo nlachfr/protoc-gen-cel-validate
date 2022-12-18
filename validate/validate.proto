@@ -12,6 +12,8 @@ extend google.protobuf.FileOptions {
 
 message ValidateOptions {
     protocel.options.Options options = 1;
+    bool required_support_disabled = 2;
+    bool resource_reference_support_disabled = 3;
 }
 
 extend google.protobuf.MessageOptions {
