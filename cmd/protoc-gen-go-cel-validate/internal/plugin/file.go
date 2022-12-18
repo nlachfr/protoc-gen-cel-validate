@@ -76,6 +76,7 @@ func NewMessage(m *protogen.Message, resourceMap map[string]string, cfg *validat
 	return &Message{
 		Message: m,
 		Imports: imports,
+		Config:  cfg,
 		Fields:  fields,
 	}
 }
@@ -83,6 +84,7 @@ func NewMessage(m *protogen.Message, resourceMap map[string]string, cfg *validat
 type Message struct {
 	*protogen.Message
 	Imports []*protogen.File
+	Config  *validate.ValidateOptions
 	Fields  []*Field
 }
 
