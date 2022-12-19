@@ -98,6 +98,7 @@ func buildAuthzProgram(expr string, desc protoreflect.MessageDescriptor, config 
 		),
 	)
 	if config != nil {
+		envOpts = append(envOpts, options.BuildStdLib(config.Options))
 		if config.Options != nil {
 			envOpts = append(envOpts, options.BuildEnvOption(config.Options))
 			if macros, err := options.BuildMacros(config.Options, expr, envOpts); err != nil {
@@ -106,7 +107,6 @@ func buildAuthzProgram(expr string, desc protoreflect.MessageDescriptor, config 
 				envOpts = append(envOpts, cel.Macros(macros...))
 			}
 		}
-		envOpts = append(envOpts, options.BuildStdLib(config.Options))
 	} else {
 		envOpts = append(envOpts, options.BuildStdLib(nil))
 	}
