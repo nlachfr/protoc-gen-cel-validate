@@ -228,34 +228,27 @@ func TestBuildRuntimeLibrary(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			envOpts := []cel.EnvOption{BuildEnvOption(tt.Config), cel.Lib(BuildRuntimeLibrary(tt.Config, tt.Options))}
-			macros, err := BuildMacros(tt.Config, tt.Rule, envOpts)
-			if err != nil {
+			if macros, err := BuildMacros(tt.Config, tt.Rule, envOpts); err != nil {
 				if !tt.WantErr {
 					t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 				}
-			}
-			envOpts = append(envOpts, cel.Macros(macros...))
-			env, err := cel.NewEnv(envOpts...)
-			if err != nil {
-				if !tt.WantErr {
+			} else {
+				envOpts = append(envOpts, cel.Macros(macros...))
+				if env, err := cel.NewCustomEnv(envOpts...); err != nil {
+					if !tt.WantErr {
+						t.Errorf("wantErr %v, got %v", tt.WantErr, err)
+					}
+				} else if ast, issues := env.Compile(tt.Rule); issues != nil && issues.Err() != nil {
+					if !tt.WantErr {
+						t.Errorf("wantErr %v, got %v", tt.WantErr, issues.Err())
+					}
+				} else if pgr, err := env.Program(ast); err != nil {
+					if !tt.WantErr {
+						t.Errorf("wantErr %v, got %v", tt.WantErr, err)
+					}
+				} else if _, _, err = pgr.Eval(map[string]interface{}{}); (err == nil && tt.WantErr) || (!tt.WantErr && err != nil) {
 					t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 				}
-			}
-			ast, issues := env.Compile(tt.Rule)
-			if issues != nil && issues.Err() != nil {
-				if !tt.WantErr {
-					t.Errorf("wantErr %v, got %v", tt.WantErr, issues.Err())
-				}
-			}
-			pgr, err := env.Program(ast)
-			if err != nil {
-				if !tt.WantErr {
-					t.Errorf("wantErr %v, got %v", tt.WantErr, err)
-				}
-			}
-			_, _, err = pgr.Eval(map[string]interface{}{})
-			if (err == nil && tt.WantErr) || (!tt.WantErr && err != nil) {
-				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 			}
 		})
 	}
