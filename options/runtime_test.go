@@ -61,6 +61,42 @@ func TestBuildRuntimeLibrary(t *testing.T) {
 			WantErr: true,
 		},
 		{
+			Name: "Conflicting name declaration",
+			Rule: `type == myFunction("")`,
+			Config: &Options{
+				Overloads: &Options_Overloads{
+					Functions: map[string]*Options_Overloads_Function{
+						"myFunction": {
+							Args: []*Options_Overloads_Type{{
+								Type: &Options_Overloads_Type_Primitive_{
+									Primitive: Options_Overloads_Type_STRING,
+								},
+							}},
+							Result: &Options_Overloads_Type{
+								Type: &Options_Overloads_Type_Primitive_{
+									Primitive: Options_Overloads_Type_STRING,
+								},
+							},
+						},
+					},
+					Variables: map[string]*Options_Overloads_Type{
+						"type": {
+							Type: &Options_Overloads_Type_Primitive_{
+								Primitive: Options_Overloads_Type_STRING,
+							},
+						},
+					},
+				},
+			},
+			Options: &testOpt{
+				vars: []*VariableOverload{{
+					Name:  "type",
+					Value: "ok",
+				}},
+			},
+			WantErr: true,
+		},
+		{
 			Name: "Missing variable overload",
 			Rule: `myVariable == myFunction("")`,
 			Config: &Options{
@@ -97,6 +133,49 @@ func TestBuildRuntimeLibrary(t *testing.T) {
 				}},
 			},
 			WantErr: true,
+		},
+		{
+			Name: "OK (stdlib variable override)",
+			Rule: `type == myFunction("")`,
+			Config: &Options{
+				Overloads: &Options_Overloads{
+					Functions: map[string]*Options_Overloads_Function{
+						"myFunction": {
+							Args: []*Options_Overloads_Type{{
+								Type: &Options_Overloads_Type_Primitive_{
+									Primitive: Options_Overloads_Type_STRING,
+								},
+							}},
+							Result: &Options_Overloads_Type{
+								Type: &Options_Overloads_Type_Primitive_{
+									Primitive: Options_Overloads_Type_STRING,
+								},
+							},
+						},
+					},
+					Variables: map[string]*Options_Overloads_Type{
+						"type": {
+							Type: &Options_Overloads_Type_Primitive_{
+								Primitive: Options_Overloads_Type_STRING,
+							},
+						},
+					},
+				},
+				StdlibOverridingEnabled: true,
+			},
+			Options: &testOpt{
+				fns: []*FunctionOverload{{
+					Name: "myFunction",
+					Function: func(v ...ref.Val) ref.Val {
+						return types.String("ok")
+					},
+				}},
+				vars: []*VariableOverload{{
+					Name:  "type",
+					Value: "ok",
+				}},
+			},
+			WantErr: false,
 		},
 		{
 			Name: "OK (1 arg)",
