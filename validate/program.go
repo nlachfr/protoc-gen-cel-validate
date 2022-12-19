@@ -43,9 +43,8 @@ func buildValidateProgram(expr string, desc protoreflect.MessageDescriptor, conf
 		cel.DeclareContextProto(desc),
 	)
 	if config != nil {
-		envOpts = append(envOpts, options.BuildStdLib(config.Options, desc))
+		envOpts = append(envOpts, options.BuildEnvOption(config.Options, desc))
 		if config.Options != nil {
-			envOpts = append(envOpts, options.BuildEnvOption(config.Options))
 			if macros, err := options.BuildMacros(config.Options, expr, envOpts); err != nil {
 				return nil, fmt.Errorf("build macros error: %v", err)
 			} else {
@@ -53,7 +52,7 @@ func buildValidateProgram(expr string, desc protoreflect.MessageDescriptor, conf
 			}
 		}
 	} else {
-		envOpts = append(envOpts, options.BuildStdLib(nil))
+		envOpts = append(envOpts, options.BuildEnvOption(nil, desc))
 	}
 	envOpts = append(envOpts, buildValidatersFunctions(desc)...)
 	env, err := cel.NewCustomEnv(envOpts...)
