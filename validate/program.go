@@ -42,16 +42,20 @@ func buildValidateProgram(expr string, desc protoreflect.MessageDescriptor, conf
 		cel.Types(&fieldmaskpb.FieldMask{}),
 		cel.DeclareContextProto(desc),
 	)
-	if config != nil && config.Options != nil {
-		envOpts = append(envOpts, options.BuildEnvOption(config.Options))
-		if macros, err := options.BuildMacros(config.Options, expr, envOpts); err != nil {
-			return nil, fmt.Errorf("build macros error: %v", err)
-		} else {
-			envOpts = append(envOpts, cel.Macros(macros...))
+	if config != nil {
+		envOpts = append(envOpts, options.BuildEnvOption(config.Options, desc))
+		if config.Options != nil {
+			if macros, err := options.BuildMacros(config.Options, expr, envOpts); err != nil {
+				return nil, fmt.Errorf("build macros error: %v", err)
+			} else {
+				envOpts = append(envOpts, cel.Macros(macros...))
+			}
 		}
+	} else {
+		envOpts = append(envOpts, options.BuildEnvOption(nil, desc))
 	}
 	envOpts = append(envOpts, buildValidatersFunctions(desc)...)
-	env, err := cel.NewEnv(envOpts...)
+	env, err := cel.NewCustomEnv(envOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("new env error: %w", err)
 	}

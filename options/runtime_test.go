@@ -61,6 +61,42 @@ func TestBuildRuntimeLibrary(t *testing.T) {
 			WantErr: true,
 		},
 		{
+			Name: "Conflicting name declaration",
+			Rule: `type == myFunction("")`,
+			Config: &Options{
+				Overloads: &Options_Overloads{
+					Functions: map[string]*Options_Overloads_Function{
+						"myFunction": {
+							Args: []*Options_Overloads_Type{{
+								Type: &Options_Overloads_Type_Primitive_{
+									Primitive: Options_Overloads_Type_STRING,
+								},
+							}},
+							Result: &Options_Overloads_Type{
+								Type: &Options_Overloads_Type_Primitive_{
+									Primitive: Options_Overloads_Type_STRING,
+								},
+							},
+						},
+					},
+					Variables: map[string]*Options_Overloads_Type{
+						"type": {
+							Type: &Options_Overloads_Type_Primitive_{
+								Primitive: Options_Overloads_Type_STRING,
+							},
+						},
+					},
+				},
+			},
+			Options: &testOpt{
+				vars: []*VariableOverload{{
+					Name:  "type",
+					Value: "ok",
+				}},
+			},
+			WantErr: true,
+		},
+		{
 			Name: "Missing variable overload",
 			Rule: `myVariable == myFunction("")`,
 			Config: &Options{
@@ -97,6 +133,49 @@ func TestBuildRuntimeLibrary(t *testing.T) {
 				}},
 			},
 			WantErr: true,
+		},
+		{
+			Name: "OK (stdlib variable override)",
+			Rule: `type == myFunction("")`,
+			Config: &Options{
+				Overloads: &Options_Overloads{
+					Functions: map[string]*Options_Overloads_Function{
+						"myFunction": {
+							Args: []*Options_Overloads_Type{{
+								Type: &Options_Overloads_Type_Primitive_{
+									Primitive: Options_Overloads_Type_STRING,
+								},
+							}},
+							Result: &Options_Overloads_Type{
+								Type: &Options_Overloads_Type_Primitive_{
+									Primitive: Options_Overloads_Type_STRING,
+								},
+							},
+						},
+					},
+					Variables: map[string]*Options_Overloads_Type{
+						"type": {
+							Type: &Options_Overloads_Type_Primitive_{
+								Primitive: Options_Overloads_Type_STRING,
+							},
+						},
+					},
+				},
+				StdlibOverridingEnabled: true,
+			},
+			Options: &testOpt{
+				fns: []*FunctionOverload{{
+					Name: "myFunction",
+					Function: func(v ...ref.Val) ref.Val {
+						return types.String("ok")
+					},
+				}},
+				vars: []*VariableOverload{{
+					Name:  "type",
+					Value: "ok",
+				}},
+			},
+			WantErr: false,
 		},
 		{
 			Name: "OK (1 arg)",
@@ -228,34 +307,27 @@ func TestBuildRuntimeLibrary(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			envOpts := []cel.EnvOption{BuildEnvOption(tt.Config), cel.Lib(BuildRuntimeLibrary(tt.Config, tt.Options))}
-			macros, err := BuildMacros(tt.Config, tt.Rule, envOpts)
-			if err != nil {
+			if macros, err := BuildMacros(tt.Config, tt.Rule, envOpts); err != nil {
 				if !tt.WantErr {
 					t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 				}
-			}
-			envOpts = append(envOpts, cel.Macros(macros...))
-			env, err := cel.NewEnv(envOpts...)
-			if err != nil {
-				if !tt.WantErr {
+			} else {
+				envOpts = append(envOpts, cel.Macros(macros...))
+				if env, err := cel.NewCustomEnv(envOpts...); err != nil {
+					if !tt.WantErr {
+						t.Errorf("wantErr %v, got %v", tt.WantErr, err)
+					}
+				} else if ast, issues := env.Compile(tt.Rule); issues != nil && issues.Err() != nil {
+					if !tt.WantErr {
+						t.Errorf("wantErr %v, got %v", tt.WantErr, issues.Err())
+					}
+				} else if pgr, err := env.Program(ast); err != nil {
+					if !tt.WantErr {
+						t.Errorf("wantErr %v, got %v", tt.WantErr, err)
+					}
+				} else if _, _, err = pgr.Eval(map[string]interface{}{}); (err == nil && tt.WantErr) || (!tt.WantErr && err != nil) {
 					t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 				}
-			}
-			ast, issues := env.Compile(tt.Rule)
-			if issues != nil && issues.Err() != nil {
-				if !tt.WantErr {
-					t.Errorf("wantErr %v, got %v", tt.WantErr, issues.Err())
-				}
-			}
-			pgr, err := env.Program(ast)
-			if err != nil {
-				if !tt.WantErr {
-					t.Errorf("wantErr %v, got %v", tt.WantErr, err)
-				}
-			}
-			_, _, err = pgr.Eval(map[string]interface{}{})
-			if (err == nil && tt.WantErr) || (!tt.WantErr && err != nil) {
-				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 			}
 		})
 	}

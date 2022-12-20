@@ -15,7 +15,7 @@ func BuildMacros(options *Options, expr string, envOpts []cel.EnvOption) ([]pars
 	if rawMacros, err := findMacros(options, expr, envOpts); err != nil {
 		return nil, fmt.Errorf("find macros error: %v", err)
 	} else {
-		env, err := cel.NewEnv(envOpts...)
+		env, err := cel.NewCustomEnv(envOpts...)
 		if err != nil {
 			return nil, fmt.Errorf("new env error: %w", err)
 		}
@@ -111,7 +111,7 @@ func findMacros(options *Options, expr string, opts []cel.EnvOption) ([]string, 
 	for k := range options.Globals.Functions {
 		envOpts = append(envOpts, cel.Declarations(decls.NewFunction(k, decls.NewOverload(k, []*v1alpha1.Type{}, &v1alpha1.Type{TypeKind: &v1alpha1.Type_Dyn{}}))))
 	}
-	env, err := cel.NewEnv(envOpts...)
+	env, err := cel.NewCustomEnv(envOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("new env error: %w", err)
 	}
