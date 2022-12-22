@@ -76,6 +76,7 @@ func NewMessage(m *protogen.Message, resourceMap map[string]string, cfg *validat
 	return &Message{
 		Message: m,
 		Imports: imports,
+		Config:  cfg,
 		Fields:  fields,
 	}
 }
@@ -83,6 +84,7 @@ func NewMessage(m *protogen.Message, resourceMap map[string]string, cfg *validat
 type Message struct {
 	*protogen.Message
 	Imports []*protogen.File
+	Config  *validate.ValidateOptions
 	Fields  []*Field
 }
 
@@ -130,6 +132,9 @@ func (f *Field) HasResourceReference() bool {
 
 func (f *Field) GetResourceReferenceValidate() string {
 	var regexp string
+	if f.Config != nil && f.Config.ResourceReferenceSupportDisabled {
+		return ""
+	}
 	if ref := proto.GetExtension(f.Desc.Options(), annotations.E_ResourceReference).(*annotations.ResourceReference); ref != nil {
 		if ref.Type != "" {
 			if ref.Type != "*" {

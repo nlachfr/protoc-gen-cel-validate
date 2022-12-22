@@ -60,7 +60,11 @@ func (m *{{$m.GoIdent.GoName}}) ValidateWithMask(ctx {{context "Context"}}, fm *
         }
         _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap = tmp
     })
-    return {{validate "ValidateWithMask"}}(ctx, m, fm, _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap)
+    {{- if .Config.RequiredSupportDisabled}}
+    return {{validate "ValidateWithMask"}}(ctx, m, fm, _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap, false)
+    {{else}}
+    return {{validate "ValidateWithMask"}}(ctx, m, fm, _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap, true)
+    {{end -}}
 }
 {{else}}
 func (m *{{$m.GoIdent.GoName}}) Validate(ctx {{context "Context"}}) error {

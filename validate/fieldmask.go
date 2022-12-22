@@ -18,7 +18,7 @@ type Validater interface {
 	ValidateWithMask(ctx context.Context, fm *fieldmaskpb.FieldMask) error
 }
 
-func ValidateWithMask(ctx context.Context, m proto.Message, fm *fieldmaskpb.FieldMask, validationMap map[string]cel.Program) error {
+func ValidateWithMask(ctx context.Context, m proto.Message, fm *fieldmaskpb.FieldMask, validationMap map[string]cel.Program, enforceRequired bool) error {
 	if validationMap == nil {
 		return fmt.Errorf("validation failed")
 	}
@@ -64,7 +64,7 @@ func ValidateWithMask(ctx context.Context, m proto.Message, fm *fieldmaskpb.Fiel
 								return fmt.Errorf(`validation failed on %s`, fdesc.FullName())
 							}
 						}
-					} else {
+					} else if enforceRequired {
 						for _, behavior := range proto.GetExtension(fdesc.Options(), annotations.E_FieldBehavior).([]annotations.FieldBehavior) {
 							if behavior == annotations.FieldBehavior_REQUIRED {
 								return fmt.Errorf(`validation failed on %s`, fdesc.FullName())

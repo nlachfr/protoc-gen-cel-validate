@@ -121,7 +121,7 @@ func TestValidateWithMask(t *testing.T) {
 		t.Run(tt.Name, func(t *testing.T) {
 			for _, ttt := range tt.Tests {
 				t.Run(ttt.Name, func(t *testing.T) {
-					err := ValidateWithMask(context.Background(), ttt.Message, &fieldmaskpb.FieldMask{Paths: []string{"*"}}, tt.ValidationMap)
+					err := ValidateWithMask(context.Background(), ttt.Message, &fieldmaskpb.FieldMask{Paths: []string{"*"}}, tt.ValidationMap, true)
 					if (err != nil && !ttt.WantErr) || (err == nil && ttt.WantErr) {
 						t.Errorf("wantErr %v, got %v", ttt.WantErr, err)
 					}
@@ -129,13 +129,13 @@ func TestValidateWithMask(t *testing.T) {
 			}
 		})
 	}
-	if err := ValidateWithMask(context.Background(), &validate.TestRpcRequest{Ref: "ref"}, nil, noDepthMap); err != nil {
+	if err := ValidateWithMask(context.Background(), &validate.TestRpcRequest{Ref: "ref"}, nil, noDepthMap, true); err != nil {
 		t.Errorf("wantErr false, got %v", err)
 	}
-	if err := ValidateWithMask(context.Background(), &validate.TestRpcRequest{Ref: "ref"}, &fieldmaskpb.FieldMask{Paths: []string{"ref", "nested"}}, noDepthMap); err != nil {
+	if err := ValidateWithMask(context.Background(), &validate.TestRpcRequest{Ref: "ref"}, &fieldmaskpb.FieldMask{Paths: []string{"ref", "nested"}}, noDepthMap, true); err != nil {
 		t.Errorf("wantErr false, got %v", err)
 	}
-	if err := ValidateWithMask(context.Background(), nil, nil, nil); err == nil {
+	if err := ValidateWithMask(context.Background(), nil, nil, nil, true); err == nil {
 		t.Errorf("wantErr true, got <nil>")
 	}
 }
