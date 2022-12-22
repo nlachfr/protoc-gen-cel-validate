@@ -3,7 +3,6 @@ package validate
 import (
 	"context"
 	"fmt"
-	reflect "reflect"
 	"strings"
 
 	"github.com/google/cel-go/cel"
@@ -57,19 +56,7 @@ func ValidateWithMask(ctx context.Context, m proto.Message, fm *fieldmaskpb.Fiel
 			subs := []string{}
 			for j := 0; j < len(paths); j++ {
 				if paths[j] == "" {
-					isDefaultValue := true
-					pf := m.ProtoReflect().Get(fdesc)
-					switch fdesc.Kind() {
-					case protoreflect.MessageKind:
-						if pf.Message().IsValid() {
-							isDefaultValue = false
-						}
-					default:
-						if !reflect.ValueOf(pf.Interface()).IsZero() {
-							isDefaultValue = false
-						}
-					}
-					if !isDefaultValue {
+					if !isDefaultValue(m, fdesc) {
 						if pgr, ok := validationMap[fdesc.TextName()]; ok {
 							if val, _, err := pgr.ContextEval(ctx, vars); err != nil {
 								return err
@@ -98,6 +85,26 @@ func ValidateWithMask(ctx context.Context, m proto.Message, fm *fieldmaskpb.Fiel
 		}
 	}
 	return nil
+}
+
+func isDefaultValue(m proto.Message, fdesc protoreflect.FieldDescriptor) bool {
+	pf := m.ProtoReflect().Get(fdesc)
+	if fdesc.IsList() {
+		return pf.List() == nil || pf.List().Len() == 0
+	} else if fdesc.IsMap() {
+		return pf.Map() == nil || pf.Map().Len() == 0
+	} else {
+		switch fdesc.Kind() {
+		case protoreflect.MessageKind, protoreflect.GroupKind:
+			return !pf.Message().IsValid()
+		case protoreflect.EnumKind:
+			return pf.Enum() == fdesc.Default().Enum()
+		case protoreflect.BytesKind:
+			return pf.Bytes() == nil || len(pf.Bytes()) == 0
+		default:
+			return pf.Interface() == fdesc.Default().Interface()
+		}
+	}
 }
 
 func buildProgramVars(m proto.Message) interface{} {
