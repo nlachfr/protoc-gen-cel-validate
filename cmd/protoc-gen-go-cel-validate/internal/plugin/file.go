@@ -27,6 +27,10 @@ func NewFile(p *protogen.Plugin, f *protogen.File, c *validate.ValidateOptions) 
 	if err != nil {
 		return nil, err
 	}
+	svcs := []*Service{}
+	for i := 0; i < len(f.Services); i++ {
+		svcs = append(svcs, NewService(f.Services[i], cfg, p.Files...))
+	}
 	msgs := []*Message{}
 	for i := 0; i < len(f.Messages); i++ {
 		msgs = append(msgs, NewMessage(f.Messages[i], resourceMap, cfg, p.Files...))
@@ -35,6 +39,7 @@ func NewFile(p *protogen.Plugin, f *protogen.File, c *validate.ValidateOptions) 
 		p:        p,
 		g:        g,
 		File:     f,
+		Services: svcs,
 		Messages: msgs,
 		Config:   cfg,
 	}, nil
@@ -44,6 +49,7 @@ type File struct {
 	p *protogen.Plugin
 	g *protogen.GeneratedFile
 	*protogen.File
+	Services []*Service
 	Messages []*Message
 	Config   *validate.ValidateOptions
 }
@@ -60,10 +66,77 @@ func (f *File) Generate() error {
 }
 
 func (f *File) Validate() error {
+	for i := 0; i < len(f.Services); i++ {
+		if err := f.Services[i].Validate(); err != nil {
+			return err
+		}
+	}
 	for i := 0; i < len(f.Messages); i++ {
 		if err := f.Messages[i].Validate(); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func NewService(s *protogen.Service, cfg *validate.ValidateOptions, imports ...*protogen.File) *Service {
+	methods := []*Method{}
+	for i := 0; i < len(s.Methods); i++ {
+		methods = append(methods, NewMethod(s.Methods[i], cfg, imports...))
+	}
+	return &Service{
+		Service: s,
+		Config:  cfg,
+		Imports: imports,
+		Methods: methods,
+	}
+}
+
+type Service struct {
+	*protogen.Service
+	Imports []*protogen.File
+	Config  *validate.ValidateOptions
+	Methods []*Method
+}
+
+func (s *Service) Validate() error {
+	for i := 0; i < len(s.Methods); i++ {
+		if err := s.Methods[i].Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func NewMethod(m *protogen.Method, cfg *validate.ValidateOptions, imports ...*protogen.File) *Method {
+	return &Method{
+		Method:  m,
+		Config:  cfg,
+		Imports: imports,
+	}
+}
+
+type Method struct {
+	*protogen.Method
+	Imports []*protogen.File
+	Config  *validate.ValidateOptions
+}
+
+func (m *Method) MethodRule() *validate.ValidateRule {
+	return proto.GetExtension(m.Desc.Options(), validate.E_Method).(*validate.ValidateRule)
+}
+
+func (m *Method) Validate() error {
+	imports := []protoreflect.FileDescriptor{}
+	for i := 0; i < len(imports); i++ {
+		imports = append(imports, m.Imports[i].Desc)
+	}
+	rule := m.MethodRule()
+	if rule == nil {
+		return nil
+	}
+	if _, err := validate.BuildMethodValidateProgram(rule.GetExpr(), m.Config, m.Input.Desc, nil, imports...); err != nil {
+		return err
 	}
 	return nil
 }
