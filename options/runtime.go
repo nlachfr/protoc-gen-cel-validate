@@ -59,13 +59,13 @@ func BuildRuntimeLibrary(options *Options, opts ...RuntimeOptions) cel.Library {
 			}
 		}
 	}
-	return &library{EnvOpts: []cel.EnvOption{}, PgrOpts: []cel.ProgramOption{cel.Functions(fns...), cel.Globals(vars)}}
+	return &Library{EnvOpts: []cel.EnvOption{}, PgrOpts: []cel.ProgramOption{cel.Functions(fns...), cel.Globals(vars)}}
 }
 
-type library struct {
+type Library struct {
 	EnvOpts []cel.EnvOption
 	PgrOpts []cel.ProgramOption
 }
 
-func (l *library) CompileOptions() []cel.EnvOption     { return l.EnvOpts }
-func (l *library) ProgramOptions() []cel.ProgramOption { return l.PgrOpts }
+func (l *Library) CompileOptions() []cel.EnvOption     { return l.EnvOpts }
+func (l *Library) ProgramOptions() []cel.ProgramOption { return l.PgrOpts }

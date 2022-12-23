@@ -14,34 +14,17 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-func BuildValidateProgramFromDesc(expr string, imports []protoreflect.FileDescriptor, msgDesc protoreflect.MessageDescriptor, config *ValidateOptions, libs ...cel.Library) (cel.Program, error) {
+func BuildValidateProgram(expr string, config *ValidateOptions, desc protoreflect.MessageDescriptor, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (cel.Program, error) {
 	envOpts := []cel.EnvOption{
-		cel.TypeDescs(msgDesc.Parent()),
-	}
-	for i := 0; i < len(imports); i++ {
-		envOpts = append(envOpts, cel.TypeDescs(imports[i]))
-	}
-	for i := 0; i < len(libs); i++ {
-		envOpts = append(envOpts, cel.Lib(libs[i]))
-	}
-	return buildValidateProgram(expr, msgDesc, config, envOpts...)
-}
-
-func BuildValidateProgram(expr string, msg proto.Message, config *ValidateOptions, libs ...cel.Library) (cel.Program, error) {
-	envOpts := []cel.EnvOption{
-		cel.Types(msg),
-	}
-	for i := 0; i < len(libs); i++ {
-		envOpts = append(envOpts, cel.Lib(libs[i]))
-	}
-	return buildValidateProgram(expr, msg.ProtoReflect().Descriptor(), config, envOpts...)
-}
-
-func buildValidateProgram(expr string, desc protoreflect.MessageDescriptor, config *ValidateOptions, envOpts ...cel.EnvOption) (cel.Program, error) {
-	envOpts = append(envOpts,
 		cel.Types(&fieldmaskpb.FieldMask{}),
 		cel.DeclareContextProto(desc),
-	)
+	}
+	if envOpt != nil {
+		envOpts = append(envOpts, envOpt)
+	}
+	for _, imp := range imports {
+		envOpts = append(envOpts, cel.TypeDescs(imp))
+	}
 	if config != nil {
 		envOpts = append(envOpts, options.BuildEnvOption(config.Options, desc))
 		if config.Options != nil {

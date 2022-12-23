@@ -164,13 +164,13 @@ func (f *Field) Validate() error {
 		if f.HasResourceReference() {
 			if s := f.GetResourceReferenceValidate(); s == "" {
 				return fmt.Errorf("cannot build resource reference validate")
-			} else if _, err := validate.BuildValidateProgramFromDesc(s, imports, f.Parent.Desc, f.Config); err != nil {
+			} else if _, err := validate.BuildValidateProgram(s, f.Config, f.Parent.Desc, nil, imports...); err != nil {
 				return err
 			}
 		}
 		return nil
 	}
-	if _, err := validate.BuildValidateProgramFromDesc(rule.Expr, imports, f.Parent.Desc, f.Config); err != nil {
+	if _, err := validate.BuildValidateProgram(rule.Expr, f.Config, f.Parent.Desc, nil, imports...); err != nil {
 		return err
 	}
 	return nil
