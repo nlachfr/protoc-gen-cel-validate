@@ -27,13 +27,13 @@ var (
 	_{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMapOnce {{sync "Once"}}
 )
 
-func (m *{{$m.GoIdent.GoName}}) Validate(ctx {{context "Context"}}) error {
+func (m *{{$m.GoIdent.GoName}}) Validate(ctx {{context "Context"}}, opts ...{{cel "EnvOption"}}) error {
     return m.ValidateWithMask(ctx, &{{fieldmaskpb "FieldMask"}}{
         Paths: []string{"*"},
     })
 }
 
-func (m *{{$m.GoIdent.GoName}}) ValidateWithMask(ctx {{context "Context"}}, fm *{{fieldmaskpb "FieldMask"}}) error {
+func (m *{{$m.GoIdent.GoName}}) ValidateWithMask(ctx {{context "Context"}}, fm *{{fieldmaskpb "FieldMask"}}, opts ...{{cel "EnvOption"}}) error {
     _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMapOnce.Do(func() {
         cfg := &{{validate "ValidateOptions"}}{}
         if err := {{proto "Unmarshal"}}(_{{$file.GoDescriptorIdent.GoName}}_rawValidateOptions,cfg); err != nil {
@@ -52,7 +52,7 @@ func (m *{{$m.GoIdent.GoName}}) ValidateWithMask(ctx {{context "Context"}}, fm *
             {{- end}}
             {{end}}
         }{
-            if pgr, err := {{validate "BuildValidateProgram"}}(v.expr, v.req, cfg); err != nil {
+            if pgr, err := {{validate "BuildValidateProgram"}}(v.expr, cfg, v.req.ProtoReflect().Descriptor(), {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})); err != nil {
                 return
             } else {
                 tmp[k] = pgr
