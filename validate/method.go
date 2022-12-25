@@ -27,12 +27,9 @@ type validateInterceptor struct {
 }
 
 func (i *validateInterceptor) Validate(ctx context.Context, attr *attribute_context.AttributeContext, m proto.Message) error {
-	if attr == nil || attr.Request == nil {
+	if attr == nil || attr.Api == nil {
 		return nil
-	} else if pgr, ok := i.methodProgramMapping[attr.Request.Method]; ok {
-		if m == nil {
-			return fmt.Errorf(`nil message`)
-		}
+	} else if pgr, ok := i.methodProgramMapping[attr.Api.Operation]; ok {
 		req := map[string]interface{}{
 			"attribute_context": attr,
 		}
@@ -44,7 +41,7 @@ func (i *validateInterceptor) Validate(ctx context.Context, attr *attribute_cont
 		if val, _, err := pgr.ContextEval(ctx, req); err != nil {
 			return err
 		} else if !types.IsBool(val) || !val.Value().(bool) {
-			return fmt.Errorf(`validation failed on "%s`, attr.Request.Path)
+			return fmt.Errorf(`validation failed on "%s`, attr.Api.Operation)
 		}
 	}
 	return nil
