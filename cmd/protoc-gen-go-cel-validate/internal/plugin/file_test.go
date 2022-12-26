@@ -8,6 +8,7 @@ import (
 	"github.com/Neakxs/protocel/testdata/validate/crossref"
 	terror "github.com/Neakxs/protocel/testdata/validate/error"
 	"github.com/Neakxs/protocel/testdata/validate/fieldmask"
+	"github.com/Neakxs/protocel/testdata/validate/method"
 	"github.com/Neakxs/protocel/testdata/validate/reference"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -199,6 +200,11 @@ func TestGenerate(t *testing.T) {
 		{
 			Name:    "Reference",
 			Desc:    []protoreflect.FileDescriptor{reference.File_testdata_validate_reference_reference_proto},
+			WantErr: false,
+		},
+		{
+			Name:    "Method",
+			Desc:    []protoreflect.FileDescriptor{method.File_testdata_validate_method_method_proto},
 			WantErr: false,
 		},
 		{

@@ -17,9 +17,9 @@ import (
 
 func TestValidateWithMask(t *testing.T) {
 	noDepthMap := map[string]cel.Program{}
-	noDepthMap["nested"], _ = BuildValidateProgram(`true`, &validate.TestRpcRequest{}, nil)
+	noDepthMap["nested"], _ = BuildValidateProgram(`true`, nil, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), nil)
 	fmNoDepthMap := map[string]cel.Program{}
-	fmNoDepthMap["nested"], _ = BuildValidateProgram(`nested.validateWithMask(fm)`, &validate.TestRpcRequest{}, nil)
+	fmNoDepthMap["nested"], _ = BuildValidateProgram(`nested.validateWithMask(fm)`, nil, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), nil)
 	tests := []struct {
 		Name          string
 		ValidationMap map[string]cel.Program

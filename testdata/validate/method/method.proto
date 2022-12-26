@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package testdata.method;
+option go_package = "github.com/Neakxs/protocel/testdata/validate/method";
+
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+service MethodService {
+    rpc Method(MethodRequest) returns (google.protobuf.Empty) {
+        option (protocel.validate.method).expr = 'attribute_context.request.headers["name"] == name';
+    }
+}
+
+message MethodRequest {
+    string name = 1;
+}

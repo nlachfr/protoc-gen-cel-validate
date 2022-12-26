@@ -23,6 +23,9 @@ func GenerateTemplate(v *pluginpb.Version, g *protogen.GeneratedFile) (*template
 			return fmt.Sprintf("v%d.%d.%d", *v.Major, *v.Minor, *v.Patch)
 		},
 	}).Funcs(template.FuncMap{
+		"QualifiedGoIdent": func(imp protogen.GoImportPath, s string) string {
+			return g.QualifiedGoIdent(imp.Ident(s))
+		},
 		"proto": func(s string) string {
 			return g.QualifiedGoIdent(protogen.GoImportPath("google.golang.org/protobuf/proto").Ident(s))
 		},
@@ -34,6 +37,9 @@ func GenerateTemplate(v *pluginpb.Version, g *protogen.GeneratedFile) (*template
 		},
 		"validate": func(s string) string {
 			return g.QualifiedGoIdent(protogen.GoImportPath("github.com/Neakxs/protocel/validate").Ident(s))
+		},
+		"options": func(s string) string {
+			return g.QualifiedGoIdent(protogen.GoImportPath("github.com/Neakxs/protocel/options").Ident(s))
 		},
 		"cel": func(s string) string {
 			return g.QualifiedGoIdent(protogen.GoImportPath("github.com/google/cel-go/cel").Ident(s))

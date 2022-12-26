@@ -47,7 +47,7 @@ func BuildEnvOption(options *Options, descs ...protoreflect.MessageDescriptor) c
 				decls = append(decls, decl)
 			}
 		}
-		return cel.Lib(&library{
+		return cel.Lib(&Library{
 			EnvOpts: []cel.EnvOption{cel.Declarations(decls...), cel.Macros(cel.StandardMacros...)},
 			PgrOpts: []cel.ProgramOption{cel.Functions(functions.StandardOverloads()...)},
 		})
