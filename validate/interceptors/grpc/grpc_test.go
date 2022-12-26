@@ -7,7 +7,6 @@ import (
 
 	tvalidate "github.com/Neakxs/protocel/testdata/validate"
 	"github.com/Neakxs/protocel/validate"
-	"github.com/google/cel-go/cel"
 	"google.golang.org/genproto/googleapis/rpc/context/attribute_context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -16,7 +15,7 @@ import (
 )
 
 type validateInterceptor struct {
-	mapping map[string]cel.Program
+	mapping map[string]*validate.Program
 }
 
 func (v *validateInterceptor) Validate(ctx context.Context, attr *attribute_context.AttributeContext, m proto.Message) error {
@@ -85,9 +84,9 @@ func TestNewGRPCUnaryInterceptor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			if pgr, err := validate.BuildMethodValidateProgram(tt.Expr, nil, tt.Request.ProtoReflect().Descriptor(), nil); err != nil {
+			if pgr, err := validate.BuildMethodValidateProgram([]string{tt.Expr}, nil, tt.Request.ProtoReflect().Descriptor(), nil); err != nil {
 				t.Error(err)
-			} else if _, err = NewGRPCUnaryInterceptor(&validateInterceptor{mapping: map[string]cel.Program{
+			} else if _, err = NewGRPCUnaryInterceptor(&validateInterceptor{mapping: map[string]*validate.Program{
 				tt.Method: pgr,
 			}})(tt.Context, tt.Request, tt.Info, func(ctx context.Context, req interface{}) (interface{}, error) { return nil, nil }); (err != nil && !tt.WantErr) || (err == nil && tt.WantErr) {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)

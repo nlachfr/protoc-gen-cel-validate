@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func NewValidateInterceptor(methodProgramMapping map[string]cel.Program) ValidateInterceptor {
+func NewValidateInterceptor(methodProgramMapping map[string]*Program) ValidateInterceptor {
 	return &validateInterceptor{
 		methodProgramMapping: methodProgramMapping,
 	}
@@ -23,7 +23,7 @@ type ValidateInterceptor interface {
 }
 
 type validateInterceptor struct {
-	methodProgramMapping map[string]cel.Program
+	methodProgramMapping map[string]*Program
 }
 
 func (i *validateInterceptor) Validate(ctx context.Context, attr *attribute_context.AttributeContext, m proto.Message) error {
@@ -38,16 +38,18 @@ func (i *validateInterceptor) Validate(ctx context.Context, attr *attribute_cont
 			f := fields.Get(i)
 			req[f.TextName()] = m.ProtoReflect().Get(f)
 		}
-		if val, _, err := pgr.ContextEval(ctx, req); err != nil {
-			return err
-		} else if !types.IsBool(val) || !val.Value().(bool) {
-			return fmt.Errorf(`validation failed on "%s`, attr.Api.Operation)
+		for _, p := range pgr.rules {
+			if val, _, err := p.ContextEval(ctx, req); err != nil {
+				return err
+			} else if !types.IsBool(val) || !val.Value().(bool) {
+				return fmt.Errorf(`validation failed on "%s`, attr.Api.Operation)
+			}
 		}
 	}
 	return nil
 }
 
-func BuildMethodValidateProgram(expr string, config *ValidateOptions, desc protoreflect.MessageDescriptor, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (cel.Program, error) {
+func BuildMethodValidateProgram(exprs []string, config *ValidateOptions, desc protoreflect.MessageDescriptor, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (*Program, error) {
 	lib := &options.Library{EnvOpts: []cel.EnvOption{
 		cel.TypeDescs(attribute_context.File_google_rpc_context_attribute_context_proto),
 		cel.Variable("attribute_context", cel.ObjectType(string((&attribute_context.AttributeContext{}).ProtoReflect().Descriptor().FullName()))),
@@ -55,5 +57,5 @@ func BuildMethodValidateProgram(expr string, config *ValidateOptions, desc proto
 	if envOpt != nil {
 		lib.EnvOpts = append(lib.EnvOpts, envOpt)
 	}
-	return BuildValidateProgram(expr, config, desc, cel.Lib(lib), imports...)
+	return BuildValidateProgram(exprs, config, desc, cel.Lib(lib), imports...)
 }

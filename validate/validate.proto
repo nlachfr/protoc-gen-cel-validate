@@ -30,4 +30,5 @@ extend google.protobuf.FieldOptions {
 
 message ValidateRule {
     string expr = 1;
+    repeated string exprs = 2;
 }

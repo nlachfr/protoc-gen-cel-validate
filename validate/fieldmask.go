@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
@@ -18,7 +17,7 @@ type Validater interface {
 	ValidateWithMask(ctx context.Context, fm *fieldmaskpb.FieldMask) error
 }
 
-func ValidateWithMask(ctx context.Context, m proto.Message, fm *fieldmaskpb.FieldMask, validationMap map[string]cel.Program, enforceRequired bool) error {
+func ValidateWithMask(ctx context.Context, m proto.Message, fm *fieldmaskpb.FieldMask, validationMap map[string]*Program, enforceRequired bool) error {
 	if validationMap == nil {
 		return fmt.Errorf("validation failed")
 	}
@@ -58,10 +57,12 @@ func ValidateWithMask(ctx context.Context, m proto.Message, fm *fieldmaskpb.Fiel
 				if paths[j] == "" {
 					if !isDefaultValue(m, fdesc) {
 						if pgr, ok := validationMap[fdesc.TextName()]; ok {
-							if val, _, err := pgr.ContextEval(ctx, vars); err != nil {
-								return err
-							} else if !types.IsBool(val) || !val.Value().(bool) {
-								return fmt.Errorf(`validation failed on %s`, fdesc.FullName())
+							for _, p := range pgr.rules {
+								if val, _, err := p.ContextEval(ctx, vars); err != nil {
+									return err
+								} else if !types.IsBool(val) || !val.Value().(bool) {
+									return fmt.Errorf(`validation failed on %s`, fdesc.FullName())
+								}
 							}
 						}
 					} else if enforceRequired {
