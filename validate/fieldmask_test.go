@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Neakxs/protocel/testdata/validate"
-	"github.com/google/cel-go/cel"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -16,13 +15,13 @@ import (
 )
 
 func TestValidateWithMask(t *testing.T) {
-	noDepthMap := map[string]cel.Program{}
-	noDepthMap["nested"], _ = BuildValidateProgram(`true`, nil, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), nil)
-	fmNoDepthMap := map[string]cel.Program{}
-	fmNoDepthMap["nested"], _ = BuildValidateProgram(`nested.validateWithMask(fm)`, nil, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), nil)
+	noDepthMap := map[string]*Program{}
+	noDepthMap["nested"], _ = BuildValidateProgram([]string{`true`}, nil, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), nil)
+	fmNoDepthMap := map[string]*Program{}
+	fmNoDepthMap["nested"], _ = BuildValidateProgram([]string{`nested.validateWithMask(fm)`}, nil, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), nil)
 	tests := []struct {
 		Name          string
-		ValidationMap map[string]cel.Program
+		ValidationMap map[string]*Program
 		Tests         []struct {
 			Name    string
 			Message proto.Message
