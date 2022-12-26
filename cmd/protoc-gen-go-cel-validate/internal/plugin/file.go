@@ -135,7 +135,14 @@ func (m *Method) Validate() error {
 	if rule == nil {
 		return nil
 	}
-	if _, err := validate.BuildMethodValidateProgram(rule.GetExpr(), m.Config, m.Input.Desc, nil, imports...); err != nil {
+	exprs := []string{}
+	if rule.Expr != "" {
+		exprs = append(exprs, rule.Expr)
+	}
+	if len(rule.Exprs) > 0 {
+		exprs = append(exprs, rule.Exprs...)
+	}
+	if _, err := validate.BuildMethodValidateProgram(exprs, m.Config, m.Input.Desc, nil, imports...); err != nil {
 		return err
 	}
 	return nil
@@ -233,18 +240,26 @@ func (f *Field) Validate() error {
 		imports = append(imports, f.Imports[i].Desc)
 	}
 	rule := f.FieldRule()
-	if rule == nil {
-		if f.HasResourceReference() {
-			if s := f.GetResourceReferenceValidate(); s == "" {
-				return fmt.Errorf("cannot build resource reference validate")
-			} else if _, err := validate.BuildValidateProgram(s, f.Config, f.Parent.Desc, nil, imports...); err != nil {
-				return err
-			}
+	exprs := []string{}
+	if f.HasResourceReference() {
+		if s := f.GetResourceReferenceValidate(); s == "" {
+			return fmt.Errorf("cannot build resource reference validate")
+		} else {
+			exprs = append(exprs, s)
 		}
-		return nil
 	}
-	if _, err := validate.BuildValidateProgram(rule.Expr, f.Config, f.Parent.Desc, nil, imports...); err != nil {
-		return err
+	if rule != nil {
+		if rule.Expr != "" {
+			exprs = append(exprs, rule.Expr)
+		}
+		if len(rule.Exprs) > 0 {
+			exprs = append(exprs, rule.Exprs...)
+		}
+	}
+	if len(exprs) > 0 {
+		if _, err := validate.BuildValidateProgram(exprs, f.Config, f.Parent.Desc, nil, imports...); err != nil {
+			return err
+		}
 	}
 	return nil
 }

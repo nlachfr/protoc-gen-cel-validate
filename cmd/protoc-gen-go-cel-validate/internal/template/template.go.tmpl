@@ -20,18 +20,28 @@ func New{{.GoName}}ValidateInterceptor(opts ...{{cel "EnvOption"}}) ({{validate 
     if err := {{proto "Unmarshal"}}(_{{$file.GoDescriptorIdent.GoName}}_rawValidateOptions,cfg); err != nil {
         return nil, err
     }
-    m := map[string]{{cel "Program"}}{}
+    m := map[string]*{{validate "Program"}}{}
     for k, v := range map[string]struct{
-        expr string
+        exprs []string
         req {{proto "Message"}}
     }{
         {{ range $m := $s.Methods }}
         {{- if $m.MethodRule -}}
-            "/{{$s.Desc.FullName}}/{{$m.GoName}}": {expr: `{{$m.MethodRule.Expr}}`, req: &{{QualifiedGoIdent $m.Input.GoIdent.GoImportPath $m.Input.GoIdent.GoName}}{}},
+            "/{{$s.Desc.FullName}}/{{$m.GoName}}": {
+                exprs: []string{
+                    {{- if $m.MethodRule.Expr -}}
+                    `{{$m.MethodRule.Expr}}`,
+                    {{- end}}                
+                    {{- if $m.MethodRule.Exprs -}}
+                    {{ range $e := $m.MethodRule.Exprs }}`{{$e}}`,{{end}}
+                    {{- end}}
+                },
+                req: &{{QualifiedGoIdent $m.Input.GoIdent.GoImportPath $m.Input.GoIdent.GoName}}{},
+            },
         {{- end}}
         {{end}}
     } {
-        if pgr, err := {{validate "BuildMethodValidateProgram"}}(v.expr, cfg, v.req.ProtoReflect().Descriptor(), {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})); err != nil {
+        if pgr, err := {{validate "BuildMethodValidateProgram"}}(v.exprs, cfg, v.req.ProtoReflect().Descriptor(), {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})); err != nil {
             return nil, err
         } else {
             m[k] = pgr
@@ -50,7 +60,7 @@ func New{{.GoName}}ValidateInterceptor(opts ...{{cel "EnvOption"}}) ({{validate 
 {{end}}
 {{if $buildValidate}}
 var (
-    _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap map[string]{{cel "Program"}} = nil
+    _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap map[string]*{{validate "Program"}} = nil
 	_{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMapOnce {{sync "Once"}}
 )
 
@@ -66,20 +76,31 @@ func (m *{{$m.GoIdent.GoName}}) ValidateWithMask(ctx {{context "Context"}}, fm *
         if err := {{proto "Unmarshal"}}(_{{$file.GoDescriptorIdent.GoName}}_rawValidateOptions,cfg); err != nil {
             return
         }
-        tmp := map[string]{{cel "Program"}}{}
+        tmp := map[string]*{{validate "Program"}}{}
         for k, v := range map[string]struct{
-            expr string
+            exprs []string
             req {{proto "Message"}}
         }{
             {{range $f := $m.Fields -}}
-            {{- if $f.FieldRule -}}
-            "{{$f.Desc.TextName}}": {expr: `{{$f.FieldRule.Expr}}`, req: m},
-            {{- else if $f.HasResourceReference -}}
-            "{{$f.Desc.TextName}}": {expr: `{{$f.GetResourceReferenceValidate}}`, req: m},
-            {{- end}}
+            "{{$f.Desc.TextName}}": {
+                    exprs: []string{
+                    {{- if $f.HasResourceReference -}}
+                        `{{$f.GetResourceReferenceValidate}}`,
+                    {{- end}}
+                    {{- if $f.FieldRule -}}
+                        {{- if $f.FieldRule.Expr -}}
+                        `{{$f.FieldRule.Expr}}`,
+                        {{- end}}
+                        {{if $f.FieldRule.Exprs -}}
+                        {{ range $e := $f.FieldRule.Exprs }}`{{$e}}`,{{end}}
+                        {{- end}}
+                    {{- end}}
+                },
+                req: m,
+            },
             {{end}}
         }{
-            if pgr, err := {{validate "BuildValidateProgram"}}(v.expr, cfg, v.req.ProtoReflect().Descriptor(), {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})); err != nil {
+            if pgr, err := {{validate "BuildValidateProgram"}}(v.exprs, cfg, v.req.ProtoReflect().Descriptor(), {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})); err != nil {
                 return
             } else {
                 tmp[k] = pgr
