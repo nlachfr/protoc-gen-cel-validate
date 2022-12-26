@@ -82,7 +82,7 @@ var tests = []struct {
 func TestBuildValidateProgramFromDesk(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			_, err := BuildValidateProgram(tt.Expr, tt.Config, validate.File_testdata_validate_test_proto.Messages().Get(0), nil)
+			_, err := BuildValidateProgram([]string{tt.Expr}, tt.Config, validate.File_testdata_validate_test_proto.Messages().Get(0), nil)
 			if (tt.WantErr && err == nil) || (!tt.WantErr && err != nil) {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 			}
@@ -93,7 +93,7 @@ func TestBuildValidateProgramFromDesk(t *testing.T) {
 func TestBuildValidateProgram(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			_, err := BuildValidateProgram(tt.Expr, tt.Config, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), nil)
+			_, err := BuildValidateProgram([]string{tt.Expr}, tt.Config, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), nil)
 			if (tt.WantErr && err == nil) || (!tt.WantErr && err != nil) {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 			}

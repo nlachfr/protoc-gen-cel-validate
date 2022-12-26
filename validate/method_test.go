@@ -103,7 +103,7 @@ func TestValidateInterceptor(t *testing.T) {
 			} else if pgr, err := env.Program(ast); err != nil {
 				t.Error(err)
 			} else {
-				err := NewValidateInterceptor(map[string]cel.Program{tt.Method: pgr}).Validate(context.Background(), tt.Context, tt.Request)
+				err := NewValidateInterceptor(map[string]*Program{tt.Method: &Program{rules: []cel.Program{pgr}}}).Validate(context.Background(), tt.Context, tt.Request)
 				if (err != nil && !tt.WantErr) || (err == nil && tt.WantErr) {
 					t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 				}
@@ -215,10 +215,10 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			var ferr error
-			if pgr, err := BuildMethodValidateProgram(tt.Expr, nil, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), tt.EnvOpt); err != nil {
+			if pgr, err := BuildMethodValidateProgram([]string{tt.Expr}, nil, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), tt.EnvOpt); err != nil {
 				ferr = err
 			} else {
-				ferr = NewValidateInterceptor(map[string]cel.Program{tt.Method: pgr}).Validate(context.Background(), tt.Context, tt.Request)
+				ferr = NewValidateInterceptor(map[string]*Program{tt.Method: pgr}).Validate(context.Background(), tt.Context, tt.Request)
 			}
 			if (ferr != nil && !tt.WantErr) || (ferr == nil && tt.WantErr) {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, ferr)
