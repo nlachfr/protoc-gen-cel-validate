@@ -31,6 +31,7 @@ func (i *validateInterceptor) Validate(ctx context.Context, attr *attribute_cont
 	} else if pgr, ok := i.methodProgramMapping[attr.Api.Operation]; ok {
 		req := map[string]interface{}{
 			"attribute_context": attr,
+			"request":           m,
 		}
 		fields := m.ProtoReflect().Descriptor().Fields()
 		for i := 0; i < fields.Len(); i++ {
@@ -48,13 +49,15 @@ func (i *validateInterceptor) Validate(ctx context.Context, attr *attribute_cont
 	return nil
 }
 
-func BuildMethodValidateProgram(exprs []string, config *ValidateOptions, desc protoreflect.MessageDescriptor, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (*Program, error) {
+func BuildMethodValidateProgram(exprs []string, config *ValidateOptions, desc protoreflect.MethodDescriptor, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (*Program, error) {
 	lib := &options.Library{EnvOpts: []cel.EnvOption{
 		cel.TypeDescs(attribute_context.File_google_rpc_context_attribute_context_proto),
 		cel.Variable("attribute_context", cel.ObjectType(string((&attribute_context.AttributeContext{}).ProtoReflect().Descriptor().FullName()))),
+		cel.TypeDescs(desc.Input().ParentFile()),
+		cel.Variable("request", cel.ObjectType(string(desc.Input().FullName()))),
 	}}
 	if envOpt != nil {
 		lib.EnvOpts = append(lib.EnvOpts, envOpt)
 	}
-	return BuildValidateProgram(exprs, config, desc, cel.Lib(lib), imports...)
+	return BuildValidateProgram(exprs, config, nil, cel.Lib(lib), imports...)
 }

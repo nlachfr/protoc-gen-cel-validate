@@ -19,17 +19,17 @@ type Program struct {
 }
 
 func BuildValidateProgram(exprs []string, config *ValidateOptions, desc protoreflect.MessageDescriptor, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (*Program, error) {
-	envOpts := []cel.EnvOption{
-		cel.Types(&fieldmaskpb.FieldMask{}),
-		cel.DeclareContextProto(desc),
-	}
+	envOpts := []cel.EnvOption{cel.Types(&fieldmaskpb.FieldMask{})}
 	if envOpt != nil {
 		envOpts = append(envOpts, envOpt)
 	}
 	for _, imp := range imports {
 		envOpts = append(envOpts, cel.TypeDescs(imp))
 	}
-	envOpts = append(envOpts, buildValidatersFunctions(desc)...)
+	if desc != nil {
+		envOpts = append(envOpts, cel.DeclareContextProto(desc))
+		envOpts = append(envOpts, buildValidatersFunctions(desc)...)
+	}
 	pgrs := []cel.Program{}
 	for _, expr := range exprs {
 		customEnvOpts := envOpts
