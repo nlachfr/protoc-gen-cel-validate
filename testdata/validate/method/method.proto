@@ -8,7 +8,7 @@ import "validate/validate.proto";
 
 service MethodService {
     rpc Method(MethodRequest) returns (google.protobuf.Empty) {
-        option (protocel.validate.method).expr = 'attribute_context.request.headers["name"] == name';
+        option (protocel.validate.method).expr = 'attribute_context.request.headers["name"] == request.name';
     }
 }
 

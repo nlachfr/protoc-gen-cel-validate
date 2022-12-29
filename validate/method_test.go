@@ -13,8 +13,9 @@ import (
 func TestValidateInterceptor(t *testing.T) {
 	env, err := cel.NewEnv(
 		cel.TypeDescs(validate.File_testdata_validate_test_proto, attribute_context.File_google_rpc_context_attribute_context_proto),
-		cel.DeclareContextProto((&validate.TestRpcRequest{}).ProtoReflect().Descriptor()),
 		cel.Variable("attribute_context", cel.ObjectType(string((&attribute_context.AttributeContext{}).ProtoReflect().Descriptor().FullName()))),
+		cel.Types((&validate.TestRpcRequest{}).ProtoReflect().New().Interface()),
+		cel.Variable("request", cel.ObjectType(string((&validate.TestRpcRequest{}).ProtoReflect().Descriptor().FullName()))),
 	)
 	if err != nil {
 		t.Error(err)
@@ -56,7 +57,7 @@ func TestValidateInterceptor(t *testing.T) {
 		},
 		{
 			Name: "Nil request",
-			Expr: `ref == "ref"`,
+			Expr: `request.ref == "ref"`,
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 			},
@@ -77,7 +78,7 @@ func TestValidateInterceptor(t *testing.T) {
 		},
 		{
 			Name: "Request validation failed",
-			Expr: `ref == "ref"`,
+			Expr: `request.ref == "ref"`,
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 			},
@@ -86,7 +87,7 @@ func TestValidateInterceptor(t *testing.T) {
 		},
 		{
 			Name: "Attribute Context & Request validation succeeded",
-			Expr: `attribute_context.request.headers["ref"] == ref`,
+			Expr: `attribute_context.request.headers["ref"] == request.ref`,
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 				Request: &attribute_context.AttributeContext_Request{
@@ -145,7 +146,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		},
 		{
 			Name: "Nil request",
-			Expr: `ref == "ref"`,
+			Expr: `request.ref == "ref"`,
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 			},
@@ -166,7 +167,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		},
 		{
 			Name: "Request validation failed",
-			Expr: `ref == "ref"`,
+			Expr: `request.ref == "ref"`,
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 			},
@@ -175,7 +176,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		},
 		{
 			Name: "Attribute Context & Request validation succeeded",
-			Expr: `attribute_context.request.headers["ref"] == ref`,
+			Expr: `attribute_context.request.headers["ref"] == request.ref`,
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 				Request: &attribute_context.AttributeContext_Request{
@@ -186,7 +187,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		},
 		{
 			Name: "Request validation with missing variable",
-			Expr: `myVariable == ref`,
+			Expr: `myVariable == request.ref`,
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 			},
@@ -195,7 +196,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		},
 		{
 			Name: "Request validation with variable succeeded",
-			Expr: `myVariable == ref`,
+			Expr: `myVariable == request.ref`,
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 			},
@@ -211,11 +212,20 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 			}),
 			Request: &validate.TestRpcRequest{Ref: "myRef"},
 		},
+		{
+			Name: "Request validation call succeeded",
+			Expr: `request.validate()`,
+			Context: &attribute_context.AttributeContext{
+				Api: &attribute_context.AttributeContext_Api{},
+			},
+			EnvOpt:  nil,
+			Request: &validate.TestRpcRequest{Ref: "refs/myref"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			var ferr error
-			if pgr, err := BuildMethodValidateProgram([]string{tt.Expr}, nil, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), tt.EnvOpt); err != nil {
+			if pgr, err := BuildMethodValidateProgram([]string{tt.Expr}, nil, validate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0), tt.EnvOpt); err != nil {
 				ferr = err
 			} else {
 				ferr = NewValidateInterceptor(map[string]*Program{tt.Method: pgr}).Validate(context.Background(), tt.Context, tt.Request)

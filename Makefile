@@ -20,9 +20,9 @@ $(PROTOC_GEN_GO):
 go-genproto: $(PROTOC_GEN_GO) $(GENPROTO_GO)
 
 test:
-	go test -count=1 ./...
+	go test -count=1 ./cmd/... ./options/... ./validate/...
 
 coverage:
-	go test -count=1 ./... -cover -coverprofile=.cover.tmp
+	go test -count=1 ./cmd/... ./options/... ./validate/... -cover -coverprofile=.cover.tmp
 	grep -v .pb.go .cover.tmp > .cover
 	go tool cover -func .cover
