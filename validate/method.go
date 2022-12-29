@@ -59,6 +59,16 @@ func BuildMethodValidateProgram(exprs []string, config *ValidateOptions, desc pr
 	if envOpt != nil {
 		lib.EnvOpts = append(lib.EnvOpts, envOpt)
 	}
+	if mthOptions := proto.GetExtension(desc.Options(), E_Method).(*ValidateRule); mthOptions != nil {
+		if config == nil {
+			config = &ValidateOptions{}
+		}
+		if config.Options != nil {
+			proto.Merge(config.Options, mthOptions.Options)
+		} else {
+			config.Options = mthOptions.Options
+		}
+	}
 	lib.EnvOpts = append(lib.EnvOpts, buildValidatersFunctions(desc.Input())...)
 	return BuildValidateProgram(exprs, config, nil, cel.Lib(lib), imports...)
 }
