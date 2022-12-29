@@ -142,7 +142,7 @@ func (m *Method) Validate() error {
 	if len(rule.Exprs) > 0 {
 		exprs = append(exprs, rule.Exprs...)
 	}
-	if _, err := validate.BuildMethodValidateProgram(exprs, m.Config, m.Input.Desc, nil, imports...); err != nil {
+	if _, err := validate.BuildMethodValidateProgram(exprs, m.Config, m.Desc, nil, imports...); err != nil {
 		return err
 	}
 	return nil

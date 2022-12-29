@@ -29,6 +29,9 @@ func GenerateTemplate(v *pluginpb.Version, g *protogen.GeneratedFile) (*template
 		"proto": func(s string) string {
 			return g.QualifiedGoIdent(protogen.GoImportPath("google.golang.org/protobuf/proto").Ident(s))
 		},
+		"protoreflect": func(s string) string {
+			return g.QualifiedGoIdent(protogen.GoImportPath("google.golang.org/protobuf/reflect/protoreflect").Ident(s))
+		},
 		"context": func(s string) string {
 			return g.QualifiedGoIdent(protogen.GoImportPath("context").Ident(s))
 		},

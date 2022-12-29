@@ -23,6 +23,7 @@ func New{{.GoName}}ValidateInterceptor(opts ...{{cel "EnvOption"}}) ({{validate 
     m := map[string]*{{validate "Program"}}{}
     for k, v := range map[string]struct{
         exprs []string
+        mth {{protoreflect "MethodDescriptor"}}
         req {{proto "Message"}}
     }{
         {{ range $m := $s.Methods }}
@@ -36,12 +37,12 @@ func New{{.GoName}}ValidateInterceptor(opts ...{{cel "EnvOption"}}) ({{validate 
                     {{ range $e := $m.MethodRule.Exprs }}`{{$e}}`,{{end}}
                     {{- end}}
                 },
-                req: &{{QualifiedGoIdent $m.Input.GoIdent.GoImportPath $m.Input.GoIdent.GoName}}{},
+                mth: {{$file.GoDescriptorIdent.GoName}}.Services().Get({{$s.Desc.Index}}).Methods().Get({{$m.Desc.Index}}),
             },
         {{- end}}
         {{end}}
     } {
-        if pgr, err := {{validate "BuildMethodValidateProgram"}}(v.exprs, cfg, v.req.ProtoReflect().Descriptor(), {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})); err != nil {
+        if pgr, err := {{validate "BuildMethodValidateProgram"}}(v.exprs, cfg, v.mth, {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})); err != nil {
             return nil, err
         } else {
             m[k] = pgr
