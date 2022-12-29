@@ -2,7 +2,6 @@ package validate
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Neakxs/protocel/options"
 	"github.com/google/cel-go/cel"
@@ -42,7 +41,7 @@ func (i *validateInterceptor) Validate(ctx context.Context, attr *attribute_cont
 			if val, _, err := p.ContextEval(ctx, req); err != nil {
 				return err
 			} else if !types.IsBool(val) || !val.Value().(bool) {
-				return fmt.Errorf(`validation failed on "%s`, attr.Api.Operation)
+				return &MethodValidationError{AttributeContext: attr}
 			}
 		}
 	}
