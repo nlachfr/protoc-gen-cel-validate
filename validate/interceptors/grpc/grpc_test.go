@@ -72,7 +72,7 @@ func TestNewGRPCUnaryInterceptor(t *testing.T) {
 			WantErr: false,
 		},
 		{
-			Name:    "Validatio error",
+			Name:    "Validation error",
 			Expr:    `ref != "ref"`,
 			Context: context.Background(),
 			Request: &tvalidate.TestRpcRequest{

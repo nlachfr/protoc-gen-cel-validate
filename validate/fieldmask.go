@@ -61,14 +61,14 @@ func ValidateWithMask(ctx context.Context, m proto.Message, fm *fieldmaskpb.Fiel
 								if val, _, err := p.ContextEval(ctx, vars); err != nil {
 									return err
 								} else if !types.IsBool(val) || !val.Value().(bool) {
-									return fmt.Errorf(`validation failed on %s`, fdesc.FullName())
+									return &ValidationError{Descriptor: fdesc}
 								}
 							}
 						}
 					} else if enforceRequired {
 						for _, behavior := range proto.GetExtension(fdesc.Options(), annotations.E_FieldBehavior).([]annotations.FieldBehavior) {
 							if behavior == annotations.FieldBehavior_REQUIRED {
-								return fmt.Errorf(`validation failed on %s`, fdesc.FullName())
+								return &ValidationError{Descriptor: fdesc}
 							}
 						}
 					}

@@ -103,7 +103,7 @@ func TestValidateInterceptor(t *testing.T) {
 			} else if pgr, err := env.Program(ast); err != nil {
 				t.Error(err)
 			} else {
-				err := NewValidateInterceptor(map[string]*Program{tt.Method: &Program{rules: []cel.Program{pgr}}}).Validate(context.Background(), tt.Context, tt.Request)
+				err := NewValidateInterceptor(map[string]*Program{tt.Method: {rules: []cel.Program{pgr}}}).Validate(context.Background(), tt.Context, tt.Request)
 				if (err != nil && !tt.WantErr) || (err == nil && tt.WantErr) {
 					t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 				}
