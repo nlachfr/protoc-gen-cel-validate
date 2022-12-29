@@ -212,6 +212,15 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 			}),
 			Request: &validate.TestRpcRequest{Ref: "myRef"},
 		},
+		{
+			Name: "Request validation call succeeded",
+			Expr: `request.validate()`,
+			Context: &attribute_context.AttributeContext{
+				Api: &attribute_context.AttributeContext_Api{},
+			},
+			EnvOpt:  nil,
+			Request: &validate.TestRpcRequest{Ref: "refs/myref"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
