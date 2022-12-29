@@ -63,7 +63,7 @@ func TestNewGRPCUnaryInterceptor(t *testing.T) {
 		},
 		{
 			Name:    "Request message provided correctly",
-			Expr:    `ref == "ref"`,
+			Expr:    `request.ref == "ref"`,
 			Context: context.Background(),
 			Request: &tvalidate.TestRpcRequest{
 				Ref: "ref",
@@ -73,7 +73,7 @@ func TestNewGRPCUnaryInterceptor(t *testing.T) {
 		},
 		{
 			Name:    "Validation error",
-			Expr:    `ref != "ref"`,
+			Expr:    `request.ref != "ref"`,
 			Context: context.Background(),
 			Request: &tvalidate.TestRpcRequest{
 				Ref: "ref",
@@ -84,7 +84,7 @@ func TestNewGRPCUnaryInterceptor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			if pgr, err := validate.BuildMethodValidateProgram([]string{tt.Expr}, nil, tt.Request.ProtoReflect().Descriptor(), nil); err != nil {
+			if pgr, err := validate.BuildMethodValidateProgram([]string{tt.Expr}, nil, tvalidate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0), nil); err != nil {
 				t.Error(err)
 			} else if _, err = NewGRPCUnaryInterceptor(&validateInterceptor{mapping: map[string]*validate.Program{
 				tt.Method: pgr,
