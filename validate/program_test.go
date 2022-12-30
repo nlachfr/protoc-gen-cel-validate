@@ -5,7 +5,6 @@ import (
 
 	"github.com/Neakxs/protocel/options"
 	"github.com/Neakxs/protocel/testdata/validate"
-	"github.com/Neakxs/protocel/testdata/validate/option"
 	"github.com/google/cel-go/cel"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -69,12 +68,6 @@ func TestBuildValidateProgram(t *testing.T) {
 				},
 			},
 			WantErr: true,
-		},
-		{
-			Name:    "OK (message options defined constant)",
-			Exprs:   []string{`name == myMessageConst`},
-			Desc:    (&option.OptionRequest{}).ProtoReflect().Descriptor(),
-			WantErr: false,
 		},
 		{
 			Name:    "OK",
@@ -150,7 +143,18 @@ func TestBuildValidateProgram(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			_, err := BuildValidateProgram(tt.Exprs, tt.Config, tt.Desc, tt.EnvOption, tt.Imports...)
+			lib := &options.Library{}
+			if tt.EnvOption != nil {
+				lib.EnvOpts = append(lib.EnvOpts, tt.EnvOption)
+			}
+			lib.EnvOpts = append(lib.EnvOpts, cel.DeclareContextProto(tt.Desc))
+			lib.EnvOpts = append(lib.EnvOpts, buildValidatersFunctions(tt.Desc)...)
+			if tt.Config == nil {
+				lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(nil, tt.Desc))
+			} else {
+				lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(tt.Config.Options, tt.Desc))
+			}
+			_, err := BuildValidateProgram(tt.Exprs, tt.Config, cel.Lib(lib), tt.Imports...)
 			if (tt.WantErr && err == nil) || (!tt.WantErr && err != nil) {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 			}

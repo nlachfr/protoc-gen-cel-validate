@@ -61,5 +61,6 @@ func BuildMethodValidateProgram(exprs []string, config *ValidateOptions, desc pr
 		config.Options = options.Join(config.Options, r.Options)
 	}
 	lib.EnvOpts = append(lib.EnvOpts, buildValidatersFunctions(desc.Input())...)
-	return BuildValidateProgram(exprs, config, nil, cel.Lib(lib), imports...)
+	lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(config.Options))
+	return BuildValidateProgram(exprs, config, cel.Lib(lib), imports...)
 }
