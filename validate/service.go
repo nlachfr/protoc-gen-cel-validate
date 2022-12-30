@@ -1,6 +1,8 @@
 package validate
 
 import (
+	"fmt"
+
 	"github.com/Neakxs/protocel/options"
 	"github.com/google/cel-go/cel"
 	"google.golang.org/protobuf/proto"
@@ -34,7 +36,7 @@ func BuildServiceValidateProgram(config *ValidateOptions, desc protoreflect.Serv
 				if pgr, err := BuildMethodValidateProgram(exprs, config, methodDesc, envOpt, imports...); err != nil {
 					return nil, err
 				} else {
-					m[string(methodDesc.FullName())] = pgr
+					m[fmt.Sprintf("/%s/%s", string(desc.FullName()), string(methodDesc.Name()))] = pgr
 				}
 			}
 		}
