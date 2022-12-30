@@ -17,5 +17,5 @@ func Join(opts ...*Options) *Options {
 			proto.Merge(opt, opts[1])
 		}
 	}
-	return Join(append([]*Options{opt}, opts[1:]...)...)
+	return Join(append([]*Options{opt}, opts[2:]...)...)
 }
