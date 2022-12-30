@@ -33,11 +33,6 @@ func (i *validateInterceptor) Validate(ctx context.Context, attr *attribute_cont
 			"attribute_context": attr,
 			"request":           m,
 		}
-		fields := m.ProtoReflect().Descriptor().Fields()
-		for i := 0; i < fields.Len(); i++ {
-			f := fields.Get(i)
-			req[f.TextName()] = m.ProtoReflect().Get(f)
-		}
 		for _, p := range pgr.rules {
 			if val, _, err := p.ContextEval(ctx, req); err != nil {
 				return err

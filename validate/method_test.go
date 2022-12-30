@@ -6,8 +6,11 @@ import (
 
 	"github.com/Neakxs/protocel/options"
 	"github.com/Neakxs/protocel/testdata/validate"
+	"github.com/Neakxs/protocel/testdata/validate/option"
 	"github.com/google/cel-go/cel"
 	"google.golang.org/genproto/googleapis/rpc/context/attribute_context"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func TestValidateInterceptor(t *testing.T) {
@@ -118,8 +121,9 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		Name    string
 		Expr    string
 		Method  string
+		Desc    protoreflect.MethodDescriptor
 		Context *attribute_context.AttributeContext
-		Request *validate.TestRpcRequest
+		Request proto.Message
 		EnvOpt  cel.EnvOption
 		WantErr bool
 	}{
@@ -127,6 +131,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 			Name:   "Method name mistmatch",
 			Expr:   `false`,
 			Method: "operation",
+			Desc:   validate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0),
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{
 					Operation: "another.Operation",
@@ -138,6 +143,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		{
 			Name: "Headers map is nil",
 			Expr: `attribute_context.request.headers["ok"] == "ok"`,
+			Desc: validate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0),
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 			},
@@ -147,6 +153,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		{
 			Name: "Nil request",
 			Expr: `request.ref == "ref"`,
+			Desc: validate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0),
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 			},
@@ -156,6 +163,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		{
 			Name: "Attribute context validation failed",
 			Expr: `attribute_context.request.headers["ok"] == "ok"`,
+			Desc: validate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0),
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 				Request: &attribute_context.AttributeContext_Request{
@@ -168,6 +176,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		{
 			Name: "Request validation failed",
 			Expr: `request.ref == "ref"`,
+			Desc: validate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0),
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 			},
@@ -177,6 +186,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		{
 			Name: "Attribute Context & Request validation succeeded",
 			Expr: `attribute_context.request.headers["ref"] == request.ref`,
+			Desc: validate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0),
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 				Request: &attribute_context.AttributeContext_Request{
@@ -188,6 +198,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		{
 			Name: "Request validation with missing variable",
 			Expr: `myVariable == request.ref`,
+			Desc: validate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0),
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 			},
@@ -197,6 +208,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		{
 			Name: "Request validation with variable succeeded",
 			Expr: `myVariable == request.ref`,
+			Desc: validate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0),
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 			},
@@ -215,17 +227,28 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 		{
 			Name: "Request validation call succeeded",
 			Expr: `request.validate()`,
+			Desc: validate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0),
 			Context: &attribute_context.AttributeContext{
 				Api: &attribute_context.AttributeContext_Api{},
 			},
 			EnvOpt:  nil,
 			Request: &validate.TestRpcRequest{Ref: "refs/myref"},
 		},
+		{
+			Name: "Request validation with method defined options",
+			Expr: `request.name == myMethodConst`,
+			Desc: option.File_testdata_validate_option_option_proto.Services().Get(0).Methods().Get(0),
+			Context: &attribute_context.AttributeContext{
+				Api: &attribute_context.AttributeContext_Api{},
+			},
+			EnvOpt:  nil,
+			Request: &option.OptionRequest{Name: "name"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			var ferr error
-			if pgr, err := BuildMethodValidateProgram([]string{tt.Expr}, nil, validate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0), tt.EnvOpt); err != nil {
+			if pgr, err := BuildMethodValidateProgram([]string{tt.Expr}, nil, tt.Desc, tt.EnvOpt); err != nil {
 				ferr = err
 			} else {
 				ferr = NewValidateInterceptor(map[string]*Program{tt.Method: pgr}).Validate(context.Background(), tt.Context, tt.Request)
