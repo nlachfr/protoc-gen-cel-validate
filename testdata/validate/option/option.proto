@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package testdata.option;
+option go_package = "github.com/Neakxs/protocel/testdata/validate/option";
+
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+service OptionService {
+    rpc Option(OptionRequest) returns (google.protobuf.Empty) {
+        option (protocel.validate.method) = {
+            exprs: ['request.name == myMethodConst']
+            options: {
+                globals: {
+                    constants: [
+                        {
+                            key: 'myMethodConst'
+                            value: "name"
+                        }
+                    ]
+                }
+            }
+        };
+    }
+}
+
+message OptionRequest {
+    option (protocel.validate.message) = {
+        options: {
+            globals: {
+                constants: [
+                    {
+                        key: 'myMessageConst'
+                        value: "name"
+                    }
+                ]
+            }
+        }
+    };
+    string name = 1 [(protocel.validate.field) = {
+        exprs: ['name == myMessageConst']
+    }]; 
+}

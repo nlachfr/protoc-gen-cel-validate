@@ -33,11 +33,6 @@ func (i *validateInterceptor) Validate(ctx context.Context, attr *attribute_cont
 			"attribute_context": attr,
 			"request":           m,
 		}
-		fields := m.ProtoReflect().Descriptor().Fields()
-		for i := 0; i < fields.Len(); i++ {
-			f := fields.Get(i)
-			req[f.TextName()] = m.ProtoReflect().Get(f)
-		}
 		for _, p := range pgr.rules {
 			if val, _, err := p.ContextEval(ctx, req); err != nil {
 				return err
@@ -58,6 +53,16 @@ func BuildMethodValidateProgram(exprs []string, config *ValidateOptions, desc pr
 	}}
 	if envOpt != nil {
 		lib.EnvOpts = append(lib.EnvOpts, envOpt)
+	}
+	if mthOptions := proto.GetExtension(desc.Options(), E_Method).(*ValidateRule); mthOptions != nil {
+		if config == nil {
+			config = &ValidateOptions{}
+		}
+		if config.Options != nil {
+			proto.Merge(config.Options, mthOptions.Options)
+		} else {
+			config.Options = mthOptions.Options
+		}
 	}
 	lib.EnvOpts = append(lib.EnvOpts, buildValidatersFunctions(desc.Input())...)
 	return BuildValidateProgram(exprs, config, nil, cel.Lib(lib), imports...)

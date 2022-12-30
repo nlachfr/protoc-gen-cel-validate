@@ -5,95 +5,152 @@ import (
 
 	"github.com/Neakxs/protocel/options"
 	"github.com/Neakxs/protocel/testdata/validate"
+	"github.com/Neakxs/protocel/testdata/validate/option"
+	"github.com/google/cel-go/cel"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-var tests = []struct {
-	Name    string
-	Expr    string
-	Config  *ValidateOptions
-	WantErr bool
-}{
-	{
-		Name:    "Unknown field",
-		Expr:    `name`,
-		Config:  nil,
-		WantErr: true,
-	},
-	{
-		Name:    "Invalid return type",
-		Expr:    `ref`,
-		Config:  nil,
-		WantErr: true,
-	},
-	{
-		Name:    "Invalid validate call on standard type",
-		Expr:    `ref.validate()`,
-		Config:  nil,
-		WantErr: true,
-	},
-	{
-		Name:    "OK",
-		Expr:    `ref == "ref"`,
-		Config:  nil,
-		WantErr: false,
-	},
-	{
-		Name: "OK (with constant)",
-		Expr: `ref == constRef`,
-		Config: &ValidateOptions{
-			Options: &options.Options{
-				Globals: &options.Options_Globals{
-					Constants: map[string]string{
-						"constRef": "ref",
-					},
-				},
-			},
-		},
-		WantErr: false,
-	},
-	{
-		Name: "OK (with macro)",
-		Expr: `rule() == "ref"`,
-		Config: &ValidateOptions{
-			Options: &options.Options{
-				Globals: &options.Options_Globals{
-					Functions: map[string]string{
-						"rule": `ref`,
-					},
-				},
-			},
-		},
-		WantErr: false,
-	},
-	{
-		Name:    "OK (validate nested)",
-		Expr:    `nested.validate()`,
-		Config:  nil,
-		WantErr: false,
-	},
-	{
-		Name:    "OK (validateWithMask nested)",
-		Expr:    `nested.validateWithMask(fm)`,
-		Config:  nil,
-		WantErr: false,
-	},
-}
-
-func TestBuildValidateProgramFromDesk(t *testing.T) {
-	for _, tt := range tests {
-		t.Run(tt.Name, func(t *testing.T) {
-			_, err := BuildValidateProgram([]string{tt.Expr}, tt.Config, validate.File_testdata_validate_test_proto.Messages().Get(0), nil)
-			if (tt.WantErr && err == nil) || (!tt.WantErr && err != nil) {
-				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
-			}
-		})
-	}
-}
-
 func TestBuildValidateProgram(t *testing.T) {
+	tests := []struct {
+		Name      string
+		Exprs     []string
+		Config    *ValidateOptions
+		Desc      protoreflect.MessageDescriptor
+		EnvOption cel.EnvOption
+		Imports   []protoreflect.FileDescriptor
+		WantErr   bool
+	}{
+		{
+			Name:    "Unknown field",
+			Exprs:   []string{`name`},
+			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
+			WantErr: true,
+		},
+		{
+			Name:    "Invalid return type",
+			Exprs:   []string{`"name""`},
+			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
+			WantErr: true,
+		},
+		{
+			Name:    "Invalid validate call on standard type",
+			Exprs:   []string{`ref.validate()`},
+			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
+			WantErr: true,
+		},
+		{
+			Name:  "Unknown field in macro",
+			Exprs: []string{`macro()`},
+			Desc:  (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
+			Config: &ValidateOptions{
+				Options: &options.Options{
+					Globals: &options.Options_Globals{
+						Functions: map[string]string{
+							"macro": `name == "name"`,
+						},
+					},
+				},
+			},
+			WantErr: true,
+		},
+		{
+			Name:  "Regexp error",
+			Exprs: []string{`ref.matches("[")`},
+			Desc:  (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
+			Config: &ValidateOptions{
+				Options: &options.Options{
+					Overloads: &options.Options_Overloads{
+						Variables: map[string]*options.Options_Overloads_Type{
+							"myVariable": {Type: &options.Options_Overloads_Type_Primitive_{
+								Primitive: options.Options_Overloads_Type_STRING,
+							}},
+						},
+					},
+				},
+			},
+			WantErr: true,
+		},
+		{
+			Name:    "OK (message options defined constant)",
+			Exprs:   []string{`name == myMessageConst`},
+			Desc:    (&option.OptionRequest{}).ProtoReflect().Descriptor(),
+			WantErr: false,
+		},
+		{
+			Name:    "OK",
+			Exprs:   []string{`ref == "ref"`},
+			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
+			Config:  nil,
+			WantErr: false,
+		},
+		{
+			Name:  "OK (with constant)",
+			Exprs: []string{`ref == constRef`},
+			Desc:  (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
+			Config: &ValidateOptions{
+				Options: &options.Options{
+					Globals: &options.Options_Globals{
+						Constants: map[string]string{
+							"constRef": "ref",
+						},
+					},
+				},
+			},
+			WantErr: false,
+		},
+		{
+			Name:  "OK (with macro)",
+			Exprs: []string{`rule() == ref`},
+			Desc:  (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
+			Config: &ValidateOptions{
+				Options: &options.Options{
+					Globals: &options.Options_Globals{
+						Functions: map[string]string{
+							"rule": `ref`,
+						},
+					},
+				},
+			},
+			WantErr: false,
+		},
+		{
+			Name:  "OK (with variable)",
+			Exprs: []string{`ref == myVariable`},
+			Desc:  (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
+			Config: &ValidateOptions{
+				Options: &options.Options{
+					Overloads: &options.Options_Overloads{
+						Variables: map[string]*options.Options_Overloads_Type{
+							"myVariable": {Type: &options.Options_Overloads_Type_Primitive_{
+								Primitive: options.Options_Overloads_Type_STRING,
+							}},
+						},
+					},
+				},
+			},
+			EnvOption: cel.Lib(&options.Library{
+				PgrOpts: []cel.ProgramOption{cel.Globals(map[string]interface{}{"myVariable": "ref"})},
+			}),
+			WantErr: false,
+		},
+		{
+			Name:    "OK (validate nested)",
+			Exprs:   []string{`nested.validate()`},
+			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
+			Config:  nil,
+			WantErr: false,
+		},
+		{
+			Name:    "OK (validateWithMask nested)",
+			Exprs:   []string{`nested.validateWithMask(fm)`},
+			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
+			Config:  nil,
+			WantErr: false,
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			_, err := BuildValidateProgram([]string{tt.Expr}, tt.Config, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), nil)
+			_, err := BuildValidateProgram(tt.Exprs, tt.Config, tt.Desc, tt.EnvOption, tt.Imports...)
 			if (tt.WantErr && err == nil) || (!tt.WantErr && err != nil) {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 			}
