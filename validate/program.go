@@ -5,7 +5,6 @@ import (
 
 	options "github.com/Neakxs/protocel/options"
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/interpreter"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -63,7 +62,7 @@ func BuildValidateProgram(exprs []string, config *ValidateOptions, desc protoref
 		if !ast.OutputType().IsAssignableType(cel.BoolType) {
 			return nil, fmt.Errorf("output type not bool")
 		}
-		pgr, err := env.Program(ast, cel.OptimizeRegex(interpreter.MatchesRegexOptimization))
+		pgr, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
 		if err != nil {
 			return nil, fmt.Errorf("program error: %w", err)
 		}
