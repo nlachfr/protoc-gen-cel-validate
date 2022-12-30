@@ -9,8 +9,8 @@ package {{.GoPackageName}}
 {{$file := .}}
 
 var _{{.GoDescriptorIdent.GoName}}_rawValidateOptions = []byte{
-    {{ range $value := (protoMarshal .Config) -}}
-    {{ printf "0x%02x, " $value}}
+    {{ range $i, $value := (protoMarshal .Config) -}}
+    {{ printf "0x%02x, " $value}}{{- if and $i (mod $i 16) }}{{print "\n"}}{{end}}
     {{- end }}
 }
 
@@ -20,35 +20,11 @@ func New{{.GoName}}ValidateInterceptor(opts ...{{cel "EnvOption"}}) ({{validate 
     if err := {{proto "Unmarshal"}}(_{{$file.GoDescriptorIdent.GoName}}_rawValidateOptions,cfg); err != nil {
         return nil, err
     }
-    m := map[string]*{{validate "Program"}}{}
-    for k, v := range map[string]struct{
-        exprs []string
-        mth {{protoreflect "MethodDescriptor"}}
-        req {{proto "Message"}}
-    }{
-        {{ range $m := $s.Methods }}
-        {{- if $m.MethodRule -}}
-            "/{{$s.Desc.FullName}}/{{$m.GoName}}": {
-                exprs: []string{
-                    {{- if $m.MethodRule.Expr -}}
-                    `{{$m.MethodRule.Expr}}`,
-                    {{- end}}                
-                    {{- if $m.MethodRule.Exprs -}}
-                    {{ range $e := $m.MethodRule.Exprs }}`{{$e}}`,{{end}}
-                    {{- end}}
-                },
-                mth: {{$file.GoDescriptorIdent.GoName}}.Services().Get({{$s.Desc.Index}}).Methods().Get({{$m.Desc.Index}}),
-            },
-        {{- end}}
-        {{end}}
-    } {
-        if pgr, err := {{validate "BuildMethodValidateProgram"}}(v.exprs, cfg, v.mth, {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})); err != nil {
-            return nil, err
-        } else {
-            m[k] = pgr
-        }
+    if m, err := {{validate "BuildServiceValidateProgram"}}(cfg, {{$file.GoDescriptorIdent.GoName}}.Services().Get({{$s.Desc.Index}}), {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})); err != nil {
+        return nil, err
+    } else {
+        return {{validate "NewValidateInterceptor"}}(m), nil
     }
-    return {{validate "NewValidateInterceptor"}}(m), nil
 }
 {{- end}}
 

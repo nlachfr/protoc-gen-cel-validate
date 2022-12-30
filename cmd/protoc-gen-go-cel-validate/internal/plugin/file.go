@@ -80,15 +80,10 @@ func (f *File) Validate() error {
 }
 
 func NewService(s *protogen.Service, cfg *validate.ValidateOptions, imports ...*protogen.File) *Service {
-	methods := []*Method{}
-	for i := 0; i < len(s.Methods); i++ {
-		methods = append(methods, NewMethod(s.Methods[i], cfg, imports...))
-	}
 	return &Service{
 		Service: s,
 		Config:  cfg,
 		Imports: imports,
-		Methods: methods,
 	}
 }
 
@@ -96,53 +91,14 @@ type Service struct {
 	*protogen.Service
 	Imports []*protogen.File
 	Config  *validate.ValidateOptions
-	Methods []*Method
 }
 
 func (s *Service) Validate() error {
-	for i := 0; i < len(s.Methods); i++ {
-		if err := s.Methods[i].Validate(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func NewMethod(m *protogen.Method, cfg *validate.ValidateOptions, imports ...*protogen.File) *Method {
-	return &Method{
-		Method:  m,
-		Config:  cfg,
-		Imports: imports,
-	}
-}
-
-type Method struct {
-	*protogen.Method
-	Imports []*protogen.File
-	Config  *validate.ValidateOptions
-}
-
-func (m *Method) MethodRule() *validate.ValidateRule {
-	return proto.GetExtension(m.Desc.Options(), validate.E_Method).(*validate.ValidateRule)
-}
-
-func (m *Method) Validate() error {
 	imports := []protoreflect.FileDescriptor{}
 	for i := 0; i < len(imports); i++ {
-		imports = append(imports, m.Imports[i].Desc)
+		imports = append(imports, s.Imports[i].Desc)
 	}
-	rule := m.MethodRule()
-	if rule == nil {
-		return nil
-	}
-	exprs := []string{}
-	if rule.Expr != "" {
-		exprs = append(exprs, rule.Expr)
-	}
-	if len(rule.Exprs) > 0 {
-		exprs = append(exprs, rule.Exprs...)
-	}
-	if _, err := validate.BuildMethodValidateProgram(exprs, m.Config, m.Desc, nil, imports...); err != nil {
+	if _, err := validate.BuildServiceValidateProgram(s.Config, s.Desc, nil, imports...); err != nil {
 		return err
 	}
 	return nil
