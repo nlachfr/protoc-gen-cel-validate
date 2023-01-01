@@ -3,13 +3,7 @@ package plugin
 import (
 	"testing"
 
-	"github.com/Neakxs/protocel/testdata/validate/advanced"
-	"github.com/Neakxs/protocel/testdata/validate/basic"
-	"github.com/Neakxs/protocel/testdata/validate/crossref"
-	terror "github.com/Neakxs/protocel/testdata/validate/error"
-	"github.com/Neakxs/protocel/testdata/validate/fieldmask"
-	"github.com/Neakxs/protocel/testdata/validate/method"
-	"github.com/Neakxs/protocel/testdata/validate/reference"
+	"github.com/Neakxs/protocel/testdata/cmd/plugin"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -179,37 +173,37 @@ func TestGenerate(t *testing.T) {
 	}{
 		{
 			Name:    "Basic",
-			Desc:    []protoreflect.FileDescriptor{basic.File_testdata_validate_basic_basic_proto},
+			Desc:    []protoreflect.FileDescriptor{plugin.File_testdata_cmd_plugin_basic_proto},
 			WantErr: false,
 		},
 		{
 			Name:    "Advanced",
-			Desc:    []protoreflect.FileDescriptor{advanced.File_testdata_validate_advanced_advanced_proto},
+			Desc:    []protoreflect.FileDescriptor{plugin.File_testdata_cmd_plugin_advanced_proto},
 			WantErr: false,
 		},
 		{
 			Name:    "Crossref",
-			Desc:    []protoreflect.FileDescriptor{crossref.File_testdata_validate_crossref_crossref_proto},
+			Desc:    []protoreflect.FileDescriptor{plugin.File_testdata_cmd_plugin_crossref_proto},
 			WantErr: false,
 		},
 		{
 			Name:    "Fieldmask",
-			Desc:    []protoreflect.FileDescriptor{fieldmask.File_testdata_validate_fieldmask_fieldmask_proto},
+			Desc:    []protoreflect.FileDescriptor{plugin.File_testdata_cmd_plugin_fieldmask_proto},
 			WantErr: false,
 		},
 		{
 			Name:    "Reference",
-			Desc:    []protoreflect.FileDescriptor{reference.File_testdata_validate_reference_reference_proto},
+			Desc:    []protoreflect.FileDescriptor{plugin.File_testdata_cmd_plugin_reference_proto},
 			WantErr: false,
 		},
 		{
 			Name:    "Method",
-			Desc:    []protoreflect.FileDescriptor{method.File_testdata_validate_method_method_proto},
+			Desc:    []protoreflect.FileDescriptor{plugin.File_testdata_cmd_plugin_method_proto},
 			WantErr: false,
 		},
 		{
 			Name:    "Error",
-			Desc:    []protoreflect.FileDescriptor{terror.File_testdata_validate_error_error_proto},
+			Desc:    []protoreflect.FileDescriptor{plugin.File_testdata_cmd_plugin_error_proto},
 			WantErr: true,
 		},
 	}

@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package testdata.crossref;
-option go_package = "github.com/Neakxs/protocel/testdata/validate/crossref";
+package testdata.cmd.plugin;
+option go_package = "github.com/Neakxs/protocel/testdata/cmd/plugin";
 
 import "validate/validate.proto";
 import "google/protobuf/empty.proto";
