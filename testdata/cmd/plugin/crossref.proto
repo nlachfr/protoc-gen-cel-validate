@@ -5,12 +5,12 @@ option go_package = "github.com/Neakxs/protocel/testdata/cmd/plugin";
 
 import "validate/validate.proto";
 import "google/protobuf/empty.proto";
-import "testdata/validate/basic/basic.proto";
+import "testdata/cmd/plugin/basic.proto";
 
 service CrossrefService {
     rpc Crossref(CrossrefRequest) returns (google.protobuf.Empty) {};
 }
 
 message CrossrefRequest {
-    testdata.basic.BasicRequest ref = 1 [(protocel.validate.field).expr = 'ref.name.startsWith("names/")'];
+    BasicRequest ref = 1 [(protocel.validate.field).expr = 'ref.name.startsWith("names/")'];
 }
