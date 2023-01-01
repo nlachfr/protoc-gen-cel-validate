@@ -47,17 +47,8 @@ func TestBuildServiceValidateProgram(t *testing.T) {
 			WantErr: false,
 		},
 		{
-			Name: "Service level expr with local const",
-			Desc: validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("ServiceLocalOptions")),
-			Config: &ValidateOptions{
-				Options: &options.Options{
-					Globals: &options.Options_Globals{
-						Constants: map[string]string{
-							"isAdmHdr": "x-is-admin",
-						},
-					},
-				},
-			},
+			Name:    "Service level expr with local const",
+			Desc:    validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("ServiceLocalOptions")),
 			WantErr: false,
 		},
 		{

@@ -27,41 +27,42 @@ func BuildMessageValidateProgram(config *ValidateOptions, desc protoreflect.Mess
 	lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(config.Options, desc))
 	envOpt = cel.Lib(lib)
 	m := map[string]*Program{}
-	resourceReferenceMap, err := GenerateResourceTypePatternMapping(desc.ParentFile(), imports...)
-	if err != nil {
-		return nil, err
-	}
+	resourceReferenceMap := GenerateResourceTypePatternMapping(imports...)
 	for i := 0; i < desc.Fields().Len(); i++ {
 		fieldDesc := desc.Fields().Get(i)
 		exprs := []string{}
-		if resourceReference := proto.GetExtension(fieldDesc.Options(), annotations.E_ResourceReference).(*annotations.ResourceReference); resourceReference != nil && !config.ResourceReferenceSupportDisabled {
-			var regexp string
-			if resourceReference.Type != "" {
-				if resourceReference.Type != "*" {
-					regexp = fmt.Sprintf("^%s$", resourceReferenceMap[resourceReference.Type])
-				}
-			} else if resourceReference.ChildType != "" {
-				regexp = fmt.Sprintf("^%s", resourceReferenceMap[resourceReference.ChildType])
-			}
-			if regexp != "" {
-				if fieldDesc.IsList() {
-					exprs = append(exprs, fmt.Sprintf(`%s.all(s, s.matches("%s"))`, fieldDesc.TextName(), regexp))
-				} else if fieldDesc.Kind() == protoreflect.StringKind {
-					exprs = append(exprs, fmt.Sprintf(`%s.matches("%s")`, fieldDesc.TextName(), regexp))
-				}
-			}
-		}
 		if fieldRule := proto.GetExtension(fieldDesc.Options(), E_Field).(*ValidateRule); fieldRule != nil {
 			exprs = append(exprs, fieldRule.Exprs...)
 			if fieldRule.Expr != "" {
 				exprs = append([]string{fieldRule.Expr}, exprs...)
 			}
-			if len(exprs) == 0 && messageRule != nil {
-				defaultExprs := messageRule.Exprs
-				if messageRule.Expr != "" {
-					defaultExprs = append([]string{messageRule.Expr}, exprs...)
+		}
+		if len(exprs) == 0 && messageRule != nil {
+			defaultExprs := messageRule.Exprs
+			if messageRule.Expr != "" {
+				defaultExprs = append([]string{messageRule.Expr}, exprs...)
+			}
+			exprs = defaultExprs
+		}
+		if resourceReference := proto.GetExtension(fieldDesc.Options(), annotations.E_ResourceReference).(*annotations.ResourceReference); resourceReference != nil && !config.ResourceReferenceSupportDisabled {
+			var ref string
+			if resourceReference.Type != "" {
+				if resourceReference.ChildType != "" {
+					return nil, fmt.Errorf(`resource reference error: type and child_type are defined`)
+				} else if resourceReference.Type != "*" {
+					ref = resourceReference.Type
 				}
-				exprs = defaultExprs
+			} else if resourceReference.ChildType != "" {
+				ref = resourceReference.ChildType
+			}
+			if regexp, ok := resourceReferenceMap[ref]; ok {
+				if fieldDesc.IsList() {
+					exprs = append(exprs, fmt.Sprintf(`%s.all(s, s.matches("%s"))`, fieldDesc.TextName(), regexp))
+				} else if fieldDesc.Kind() == protoreflect.StringKind {
+					exprs = append(exprs, fmt.Sprintf(`%s.matches("%s")`, fieldDesc.TextName(), regexp))
+				}
+			} else {
+				return nil, fmt.Errorf(`cannot find type "%s"`, ref)
 			}
 		}
 		if len(exprs) > 0 {

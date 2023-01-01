@@ -1,7 +1,6 @@
 package validate
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -13,7 +12,7 @@ import (
 var patternRegexp = regexp.MustCompile(`\{[\w-]+\}`)
 var newPattern = `[\\w-\\.]+`
 
-func GenerateResourceTypePatternMapping(file protoreflect.FileDescriptor, imports ...protoreflect.FileDescriptor) (map[string]string, error) {
+func GenerateResourceTypePatternMapping(imports ...protoreflect.FileDescriptor) map[string]string {
 	m := map[string]string{}
 	for i := 0; i < len(imports); i++ {
 		messages := imports[i].Messages()
@@ -29,27 +28,5 @@ func GenerateResourceTypePatternMapping(file protoreflect.FileDescriptor, import
 			}
 		}
 	}
-	messages := file.Messages()
-	for i := 0; i < messages.Len(); i++ {
-		fields := messages.Get(i).Fields()
-		for j := 0; j < fields.Len(); j++ {
-			field := fields.Get(j)
-			if ref := proto.GetExtension(field.Options(), annotations.E_ResourceReference).(*annotations.ResourceReference); ref != nil {
-				if ref.Type != "" && ref.ChildType != "" {
-					return nil, fmt.Errorf(`resource reference error: type and child_type are defined`)
-				}
-				if ref.Type != "*" && ref.Type != "" {
-					if _, ok := m[ref.Type]; !ok {
-						return nil, fmt.Errorf(`cannot find type "%s"`, ref.Type)
-					}
-				}
-				if ref.ChildType != "" {
-					if _, ok := m[ref.ChildType]; !ok {
-						return nil, fmt.Errorf(`cannot find type "%s"`, ref.ChildType)
-					}
-				}
-			}
-		}
-	}
-	return m, nil
+	return m
 }

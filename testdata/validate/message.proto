@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package testdata.validate;
+option go_package = "github.com/Neakxs/protocel/testdata/validate";
+
+import "validate/validate.proto";
+
+message Message {
+    string name = 1;
+}
+
+message MessageExpr {
+    option (protocel.validate.message) = {
+        expr: 'name != ""'
+    };
+    string name = 1;
+}
+
+message MessageOptions {
+    option (protocel.validate.message) = {
+        expr: 'name != emptyName'
+    };
+    string name = 1;
+}
+
+message MessageLocalOptions {
+    option (protocel.validate.message) = {
+        expr: 'name != emptyName'
+        options: {
+            globals: {
+                constants: [{
+                    key: "emptyName"
+                    value: ""
+                }]
+            }
+        }
+    };
+    string name = 1;
+}
