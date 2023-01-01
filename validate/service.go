@@ -20,24 +20,25 @@ func BuildServiceValidateProgram(config *ValidateOptions, desc protoreflect.Serv
 	m := map[string]*Program{}
 	for i := 0; i < desc.Methods().Len(); i++ {
 		methodDesc := desc.Methods().Get(i)
+		exprs := []string{}
 		if methodRule := proto.GetExtension(methodDesc.Options(), E_Method).(*ValidateRule); methodRule != nil {
-			exprs := methodRule.Exprs
+			exprs = methodRule.Exprs
 			if methodRule.Expr != "" {
 				exprs = append([]string{methodRule.Expr}, exprs...)
 			}
-			if len(exprs) == 0 && serviceRule != nil {
-				defaultExprs := serviceRule.Exprs
-				if serviceRule.Expr != "" {
-					defaultExprs = append([]string{serviceRule.Expr}, exprs...)
-				}
-				exprs = defaultExprs
+		}
+		if len(exprs) == 0 && serviceRule != nil {
+			defaultExprs := serviceRule.Exprs
+			if serviceRule.Expr != "" {
+				defaultExprs = append([]string{serviceRule.Expr}, exprs...)
 			}
-			if len(exprs) > 0 {
-				if pgr, err := BuildMethodValidateProgram(exprs, config, methodDesc, envOpt, imports...); err != nil {
-					return nil, err
-				} else {
-					m[fmt.Sprintf("/%s/%s", string(desc.FullName()), string(methodDesc.Name()))] = pgr
-				}
+			exprs = defaultExprs
+		}
+		if len(exprs) > 0 {
+			if pgr, err := BuildMethodValidateProgram(exprs, config, methodDesc, envOpt, imports...); err != nil {
+				return nil, err
+			} else {
+				m[fmt.Sprintf("/%s/%s", string(desc.FullName()), string(methodDesc.Name()))] = pgr
 			}
 		}
 	}

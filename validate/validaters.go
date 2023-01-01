@@ -55,14 +55,22 @@ func buildValidateWithMaskFunctionOpt(name string, t string) cel.FunctionOpt {
 }
 
 func buildValidatersFunctions(desc protoreflect.MessageDescriptor) []cel.EnvOption {
-	return []cel.EnvOption{
-		buildValidaterFunction("validate", buildValidateFunctionOpt, desc),
-		buildValidaterFunction("validateWithMask", buildValidateWithMaskFunctionOpt, desc),
+	res := []cel.EnvOption{}
+	if r := buildValidaterFunction("validate", buildValidateFunctionOpt, desc); r != nil {
+		res = append(res, r)
 	}
+	if r := buildValidaterFunction("validateWithMask", buildValidateWithMaskFunctionOpt, desc); r != nil {
+		res = append(res, r)
+	}
+	return res
 }
 
 func buildValidaterFunction(name string, optBuilder func(name string, t string) cel.FunctionOpt, desc protoreflect.MessageDescriptor) cel.EnvOption {
-	return cel.Function(name, buildValidaterFunctionOpts(name, optBuilder, desc, map[string]bool{})...)
+	opts := buildValidaterFunctionOpts(name, optBuilder, desc, map[string]bool{})
+	if len(opts) > 0 {
+		return cel.Function(name, opts...)
+	}
+	return nil
 }
 
 func buildValidaterFunctionOpts(name string, optBuilder func(name string, t string) cel.FunctionOpt, desc protoreflect.MessageDescriptor, m map[string]bool) []cel.FunctionOpt {
