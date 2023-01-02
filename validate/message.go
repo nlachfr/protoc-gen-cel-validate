@@ -37,13 +37,13 @@ func BuildMessageValidateProgram(config *ValidateOptions, desc protoreflect.Mess
 				exprs = append([]string{fieldRule.Expr}, exprs...)
 			}
 		}
-		if len(exprs) == 0 && messageRule != nil {
-			defaultExprs := messageRule.Exprs
-			if messageRule.Expr != "" {
-				defaultExprs = append([]string{messageRule.Expr}, exprs...)
-			}
-			exprs = defaultExprs
-		}
+		// if len(exprs) == 0 && messageRule != nil {
+		// 	defaultExprs := messageRule.Exprs
+		// 	if messageRule.Expr != "" {
+		// 		defaultExprs = append([]string{messageRule.Expr}, exprs...)
+		// 	}
+		// 	exprs = defaultExprs
+		// }
 		if resourceReference := proto.GetExtension(fieldDesc.Options(), annotations.E_ResourceReference).(*annotations.ResourceReference); resourceReference != nil && !config.ResourceReferenceSupportDisabled {
 			var ref string
 			if resourceReference.Type != "" {
@@ -69,7 +69,7 @@ func BuildMessageValidateProgram(config *ValidateOptions, desc protoreflect.Mess
 			if pgr, err := BuildValidateProgram(exprs, config, envOpt, imports...); err != nil {
 				return nil, err
 			} else {
-				m[string(fieldDesc.FullName())] = pgr
+				m[fieldDesc.TextName()] = pgr
 			}
 		}
 	}
