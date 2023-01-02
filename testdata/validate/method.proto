@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package testdata.validate;
+option go_package = "github.com/Neakxs/protocel/testdata/validate";
+
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+service MethodExpr {
+    rpc Rpc(google.protobuf.Empty) returns (google.protobuf.Empty) {
+        option (protocel.validate.method) = {
+            expr: 'attribute_context.request.headers["x-is-admin"] == "true"'
+        };
+    };
+}
+
+service MethodOptions {
+    rpc Rpc(google.protobuf.Empty) returns (google.protobuf.Empty) {
+        option (protocel.validate.method) = {
+            expr: 'attribute_context.request.headers[isAdmHdr] == "true"'
+        };
+    };
+}
+
+service MethodLocalOptions {
+    rpc Rpc(google.protobuf.Empty) returns (google.protobuf.Empty) {
+        option (protocel.validate.method) = {
+            expr: 'attribute_context.request.headers[isAdmHdr] == "true"'
+            options: {
+                globals: {
+                    constants: [{
+                        key: "isAdmHdr"
+                        value: "x-is-admin"
+                    }]
+                }
+            }
+        };
+    };
+}

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package testdata.cmd.plugin;
+option go_package = "github.com/Neakxs/protocel/testdata/cmd/plugin";
+
+import "validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "testdata/cmd/plugin/basic.proto";
+
+service CrossrefService {
+    rpc Crossref(CrossrefRequest) returns (google.protobuf.Empty) {};
+}
+
+message CrossrefRequest {
+    BasicRequest ref = 1 [(protocel.validate.field).expr = 'ref.name.startsWith("names/")'];
+}

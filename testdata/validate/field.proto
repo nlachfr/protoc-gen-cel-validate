@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package testdata.validate;
+option go_package = "github.com/Neakxs/protocel/testdata/validate";
+
+import "google/api/resource.proto";
+import "validate/validate.proto";
+
+message Field {
+    option (google.api.resource) = {
+        type: "testdata.validate/Field"
+        pattern: "fields/{field}"
+        singular: "field"
+    };
+    string name = 1;
+}
+
+message FieldExpr {
+    string name = 1 [
+        (protocel.validate.field) = {
+            expr: 'name != ""'
+        }
+    ];
+}
+
+message FieldReferenceWrong {
+    string name = 1 [
+        (google.api.resource_reference).type = "testdata.validate/Fild"
+    ];
+}
+
+message FieldReferenceType {
+    string name = 1 [
+        (google.api.resource_reference).type = "testdata.validate/Field"
+    ];
+}
+
+message FieldReferenceChild {
+    string name = 1 [
+        (google.api.resource_reference).child_type = "testdata.validate/Field"
+    ];
+}
+
+message FieldReferenceTypeAndChild {
+    string name = 1 [
+        (google.api.resource_reference) = {
+            type: "testdata.validate/Field"
+            child_type: "testdata.validate/Field"
+        }
+    ];
+}
+
+message FieldRepeatedReferenceType {
+    repeated string name = 1 [
+        (google.api.resource_reference).type = "testdata.validate/Field"
+    ];
+}
+
+message FieldOptions {
+    string name = 1 [
+        (protocel.validate.field) = {
+            expr: 'name != emptyName'
+        }
+    ];
+}
+
+message FieldLocalOptions {
+    string name = 1 [
+        (protocel.validate.field) = {
+            expr: 'name != ""'
+            options: {
+                globals: {
+                    constants: [{
+                        key: "emptyName"
+                        value: ""
+                    }]
+                }
+            }
+        }
+    ];
+}

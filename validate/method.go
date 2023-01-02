@@ -45,6 +45,9 @@ func (i *validateInterceptor) Validate(ctx context.Context, attr *attribute_cont
 }
 
 func BuildMethodValidateProgram(exprs []string, config *ValidateOptions, desc protoreflect.MethodDescriptor, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (*Program, error) {
+	if config == nil {
+		config = &ValidateOptions{}
+	}
 	lib := &options.Library{EnvOpts: []cel.EnvOption{
 		cel.TypeDescs(attribute_context.File_google_rpc_context_attribute_context_proto),
 		cel.Variable("attribute_context", cel.ObjectType(string((&attribute_context.AttributeContext{}).ProtoReflect().Descriptor().FullName()))),
@@ -54,16 +57,10 @@ func BuildMethodValidateProgram(exprs []string, config *ValidateOptions, desc pr
 	if envOpt != nil {
 		lib.EnvOpts = append(lib.EnvOpts, envOpt)
 	}
-	if mthOptions := proto.GetExtension(desc.Options(), E_Method).(*ValidateRule); mthOptions != nil {
-		if config == nil {
-			config = &ValidateOptions{}
-		}
-		if config.Options != nil {
-			proto.Merge(config.Options, mthOptions.Options)
-		} else {
-			config.Options = mthOptions.Options
-		}
+	if r := proto.GetExtension(desc.Options(), E_Method).(*ValidateRule); r != nil {
+		config.Options = options.Join(config.Options, r.Options)
 	}
 	lib.EnvOpts = append(lib.EnvOpts, buildValidatersFunctions(desc.Input())...)
-	return BuildValidateProgram(exprs, config, nil, cel.Lib(lib), imports...)
+	lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(config.Options))
+	return BuildValidateProgram(exprs, config, cel.Lib(lib), imports...)
 }

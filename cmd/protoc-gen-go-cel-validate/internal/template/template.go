@@ -26,6 +26,9 @@ func GenerateTemplate(v *pluginpb.Version, g *protogen.GeneratedFile) (*template
 		"QualifiedGoIdent": func(imp protogen.GoImportPath, s string) string {
 			return g.QualifiedGoIdent(imp.Ident(s))
 		},
+		"mod": func(i, j int) bool {
+			return i%j == 0
+		},
 		"proto": func(s string) string {
 			return g.QualifiedGoIdent(protogen.GoImportPath("google.golang.org/protobuf/proto").Ident(s))
 		},

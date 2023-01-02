@@ -16,6 +16,10 @@ message ValidateOptions {
     bool resource_reference_support_disabled = 3;
 }
 
+extend google.protobuf.ServiceOptions {
+    ValidateRule service = 1178;
+}
+
 extend google.protobuf.MethodOptions {
     ValidateRule method = 1178;
 }

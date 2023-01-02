@@ -22,6 +22,11 @@ go-genproto: $(PROTOC_GEN_GO) $(GENPROTO_GO)
 test:
 	go test -count=1 ./cmd/... ./options/... ./validate/...
 
+.PHONY: testdata
+testdata:
+	find testdata/ -name '*.proto' -exec protoc --go_out=. --go_opt=paths=source_relative {} \;
+	find testdata/ -name '*.pb.go' -exec sed -i "/github.com\/Neakxs\/protocel\/validate/d" {} \; 
+
 coverage:
 	go test -count=1 ./cmd/... ./options/... ./validate/... -cover -coverprofile=.cover.tmp
 	grep -v .pb.go .cover.tmp > .cover

@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package testdata.reference;
-option go_package = "github.com/Neakxs/protocel/testdata/validate/reference";
+package testdata.cmd.plugin;
+option go_package = "github.com/Neakxs/protocel/testdata/cmd/plugin";
 
 import "google/api/resource.proto";
 import "google/protobuf/empty.proto";

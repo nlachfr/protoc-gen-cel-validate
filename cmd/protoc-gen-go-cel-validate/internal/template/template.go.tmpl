@@ -8,11 +8,21 @@ package {{.GoPackageName}}
 
 {{$file := .}}
 
-var _{{.GoDescriptorIdent.GoName}}_rawValidateOptions = []byte{
-    {{ range $value := (protoMarshal .Config) -}}
-    {{ printf "0x%02x, " $value}}
-    {{- end }}
+var (
+    _{{.GoDescriptorIdent.GoName}}_rawValidateOptions = []byte{
+        {{ range $i, $value := (protoMarshal .Config) -}}
+        {{ printf "0x%02x, " $value}}{{- if and $i (mod $i 16) }}{{print "\n"}}{{end}}
+        {{- end }}
+    }
+    _{{.GoDescriptorIdent.GoName}}_validateImports = []{{protoreflect "FileDescriptor"}}{}
+)
+
+func init() {
+    for i := 0; i < {{.GoDescriptorIdent.GoName}}.Imports().Len(); i++ {
+        _{{.GoDescriptorIdent.GoName}}_validateImports = append(_{{.GoDescriptorIdent.GoName}}_validateImports, {{.GoDescriptorIdent.GoName}}.Imports().Get(i))
+    }
 }
+
 
 {{ range $s := .Services }}
 func New{{.GoName}}ValidateInterceptor(opts ...{{cel "EnvOption"}}) ({{validate "ValidateInterceptor"}}, error) {
@@ -20,46 +30,16 @@ func New{{.GoName}}ValidateInterceptor(opts ...{{cel "EnvOption"}}) ({{validate 
     if err := {{proto "Unmarshal"}}(_{{$file.GoDescriptorIdent.GoName}}_rawValidateOptions,cfg); err != nil {
         return nil, err
     }
-    m := map[string]*{{validate "Program"}}{}
-    for k, v := range map[string]struct{
-        exprs []string
-        mth {{protoreflect "MethodDescriptor"}}
-        req {{proto "Message"}}
-    }{
-        {{ range $m := $s.Methods }}
-        {{- if $m.MethodRule -}}
-            "/{{$s.Desc.FullName}}/{{$m.GoName}}": {
-                exprs: []string{
-                    {{- if $m.MethodRule.Expr -}}
-                    `{{$m.MethodRule.Expr}}`,
-                    {{- end}}                
-                    {{- if $m.MethodRule.Exprs -}}
-                    {{ range $e := $m.MethodRule.Exprs }}`{{$e}}`,{{end}}
-                    {{- end}}
-                },
-                mth: {{$file.GoDescriptorIdent.GoName}}.Services().Get({{$s.Desc.Index}}).Methods().Get({{$m.Desc.Index}}),
-            },
-        {{- end}}
-        {{end}}
-    } {
-        if pgr, err := {{validate "BuildMethodValidateProgram"}}(v.exprs, cfg, v.mth, {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})); err != nil {
-            return nil, err
-        } else {
-            m[k] = pgr
-        }
+    if m, err := {{validate "BuildServiceValidateProgram"}}(cfg, {{$file.GoDescriptorIdent.GoName}}.Services().Get({{$s.Desc.Index}}), {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts}), _{{$file.GoDescriptorIdent.GoName}}_validateImports...); err != nil {
+        return nil, err
+    } else {
+        return {{validate "NewValidateInterceptor"}}(m), nil
     }
-    return {{validate "NewValidateInterceptor"}}(m), nil
 }
 {{- end}}
 
 {{range $messageNo,$m := .Messages}}
-{{$buildValidate := false}}
-{{range $fieldNo, $f := $m.Fields }}
-	{{if or $f.FieldRule $f.HasResourceReference $f.HasFieldBehaviorRequired}}
-		{{$buildValidate = true}}
-	{{end}}
-{{end}}
-{{if $buildValidate}}
+{{if $m.ContainsValidatePrograms}}
 var (
     _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap map[string]*{{validate "Program"}} = nil
 	_{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMapOnce {{sync "Once"}}
@@ -77,37 +57,10 @@ func (m *{{$m.GoIdent.GoName}}) ValidateWithMask(ctx {{context "Context"}}, fm *
         if err := {{proto "Unmarshal"}}(_{{$file.GoDescriptorIdent.GoName}}_rawValidateOptions,cfg); err != nil {
             return
         }
-        tmp := map[string]*{{validate "Program"}}{}
-        for k, v := range map[string]struct{
-            exprs []string
-            req {{proto "Message"}}
-        }{
-            {{range $f := $m.Fields -}}
-            "{{$f.Desc.TextName}}": {
-                    exprs: []string{
-                    {{- if $f.HasResourceReference -}}
-                        `{{$f.GetResourceReferenceValidate}}`,
-                    {{- end}}
-                    {{- if $f.FieldRule -}}
-                        {{- if $f.FieldRule.Expr -}}
-                        `{{$f.FieldRule.Expr}}`,
-                        {{- end}}
-                        {{if $f.FieldRule.Exprs -}}
-                        {{ range $e := $f.FieldRule.Exprs }}`{{$e}}`,{{end}}
-                        {{- end}}
-                    {{- end}}
-                },
-                req: m,
-            },
-            {{end}}
-        }{
-            if pgr, err := {{validate "BuildValidateProgram"}}(v.exprs, cfg, v.req.ProtoReflect().Descriptor(), {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})); err != nil {
-                return
-            } else {
-                tmp[k] = pgr
-            }
+        m, err := {{validate "BuildMessageValidateProgram"}}(cfg, m.ProtoReflect().Descriptor(), {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts}), _{{$file.GoDescriptorIdent.GoName}}_validateImports...); 
+        if err == nil {
+            _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap = m
         }
-        _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap = tmp
     })
     {{- if .Config.RequiredSupportDisabled}}
     return {{validate "ValidateWithMask"}}(ctx, m, fm, _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap, false)

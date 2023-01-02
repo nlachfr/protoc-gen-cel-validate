@@ -4,7 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/Neakxs/protocel/options"
 	"github.com/Neakxs/protocel/testdata/validate"
+	"github.com/google/cel-go/cel"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -15,10 +17,13 @@ import (
 )
 
 func TestValidateWithMask(t *testing.T) {
+	lib := &options.Library{EnvOpts: []cel.EnvOption{cel.DeclareContextProto((&validate.TestRpcRequest{}).ProtoReflect().Descriptor())}}
+	lib.EnvOpts = append(lib.EnvOpts, buildValidatersFunctions((&validate.TestRpcRequest{}).ProtoReflect().Descriptor())...)
+	lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(nil, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor()))
 	noDepthMap := map[string]*Program{}
-	noDepthMap["nested"], _ = BuildValidateProgram([]string{`true`}, nil, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), nil)
+	noDepthMap["nested"], _ = BuildValidateProgram([]string{`true`}, nil, cel.Lib(lib))
 	fmNoDepthMap := map[string]*Program{}
-	fmNoDepthMap["nested"], _ = BuildValidateProgram([]string{`nested.validateWithMask(fm)`}, nil, (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(), nil)
+	fmNoDepthMap["nested"], _ = BuildValidateProgram([]string{`nested.validateWithMask(fm)`}, nil, cel.Lib(lib))
 	tests := []struct {
 		Name          string
 		ValidationMap map[string]*Program
