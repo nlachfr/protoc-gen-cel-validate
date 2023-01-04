@@ -1,15 +1,45 @@
 package validate
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Neakxs/protocel/options"
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/common/types"
+	"google.golang.org/genproto/googleapis/rpc/context/attribute_context"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func BuildServiceValidateProgram(config *ValidateOptions, desc protoreflect.ServiceDescriptor, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (map[string]*Program, error) {
+type ServiceValidateProgram interface {
+	Validate(ctx context.Context, attr *attribute_context.AttributeContext, m proto.Message) error
+}
+
+type serviceValidateProgram struct {
+	methodsPrograms map[string]ValidateProgram
+}
+
+func (p *serviceValidateProgram) Validate(ctx context.Context, attr *attribute_context.AttributeContext, m proto.Message) error {
+	if attr == nil || attr.Api == nil {
+		return nil
+	} else if pgr, ok := p.methodsPrograms[attr.Api.Operation]; ok {
+		req := map[string]interface{}{
+			"attribute_context": attr,
+			"request":           m,
+		}
+		for _, p := range pgr.CEL() {
+			if val, _, err := p.ContextEval(ctx, req); err != nil {
+				return err
+			} else if !types.IsBool(val) || !val.Value().(bool) {
+				return &MethodValidationError{AttributeContext: attr}
+			}
+		}
+	}
+	return nil
+}
+
+func BuildServiceValidateProgram(config *ValidateOptions, desc protoreflect.ServiceDescriptor, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (ServiceValidateProgram, error) {
 	if config == nil {
 		config = &ValidateOptions{}
 	}
@@ -17,7 +47,7 @@ func BuildServiceValidateProgram(config *ValidateOptions, desc protoreflect.Serv
 	if serviceRule != nil {
 		config.Options = options.Join(config.Options, serviceRule.Options)
 	}
-	m := map[string]*Program{}
+	m := map[string]ValidateProgram{}
 	for i := 0; i < desc.Methods().Len(); i++ {
 		methodDesc := desc.Methods().Get(i)
 		exprs := []string{}
@@ -42,5 +72,26 @@ func BuildServiceValidateProgram(config *ValidateOptions, desc protoreflect.Serv
 			}
 		}
 	}
-	return m, nil
+	return &serviceValidateProgram{methodsPrograms: m}, nil
+}
+
+func BuildMethodValidateProgram(exprs []string, config *ValidateOptions, desc protoreflect.MethodDescriptor, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (ValidateProgram, error) {
+	if config == nil {
+		config = &ValidateOptions{}
+	}
+	lib := &options.Library{EnvOpts: []cel.EnvOption{
+		cel.TypeDescs(attribute_context.File_google_rpc_context_attribute_context_proto),
+		cel.Variable("attribute_context", cel.ObjectType(string((&attribute_context.AttributeContext{}).ProtoReflect().Descriptor().FullName()))),
+		cel.TypeDescs(desc.Input().ParentFile()),
+		cel.Variable("request", cel.ObjectType(string(desc.Input().FullName()))),
+	}}
+	if envOpt != nil {
+		lib.EnvOpts = append(lib.EnvOpts, envOpt)
+	}
+	if r := proto.GetExtension(desc.Options(), E_Method).(*ValidateRule); r != nil {
+		config.Options = options.Join(config.Options, r.Options)
+	}
+	lib.EnvOpts = append(lib.EnvOpts, buildValidatersFunctions(desc.Input())...)
+	lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(config.Options))
+	return BuildValidateProgram(exprs, config, cel.Lib(lib), imports...)
 }

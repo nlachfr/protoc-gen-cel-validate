@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"context"
 	"fmt"
 
 	options "github.com/Neakxs/protocel/options"
@@ -9,11 +10,26 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
+type Validater interface {
+	Validate(ctx context.Context) error
+	ValidateWithMask(ctx context.Context, fm *fieldmaskpb.FieldMask) error
+}
+
+type ValidateProgram interface {
+	CEL() map[string]cel.Program
+}
+
+type validateProgram struct {
+	rules map[string]cel.Program
+}
+
+func (p *validateProgram) CEL() map[string]cel.Program { return p.rules }
+
 type Program struct {
 	rules []cel.Program
 }
 
-func BuildValidateProgram(exprs []string, config *ValidateOptions, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (*Program, error) {
+func BuildValidateProgram(exprs []string, config *ValidateOptions, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (ValidateProgram, error) {
 	envOpts := []cel.EnvOption{cel.Types(&fieldmaskpb.FieldMask{})}
 	if envOpt != nil {
 		envOpts = append(envOpts, envOpt)
@@ -21,7 +37,7 @@ func BuildValidateProgram(exprs []string, config *ValidateOptions, envOpt cel.En
 	for _, imp := range imports {
 		envOpts = append(envOpts, cel.TypeDescs(imp))
 	}
-	pgrs := []cel.Program{}
+	rules := map[string]cel.Program{}
 	for _, expr := range exprs {
 		customEnvOpts := envOpts
 		if config != nil && config.Options != nil {
@@ -46,7 +62,7 @@ func BuildValidateProgram(exprs []string, config *ValidateOptions, envOpt cel.En
 		if err != nil {
 			return nil, fmt.Errorf("program error: %w", err)
 		}
-		pgrs = append(pgrs, pgr)
+		rules[expr] = pgr
 	}
-	return &Program{rules: pgrs}, nil
+	return &validateProgram{rules: rules}, nil
 }
