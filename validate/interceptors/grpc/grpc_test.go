@@ -1,96 +1,131 @@
 package grpc
 
-// import (
-// 	"context"
-// 	"net"
-// 	"testing"
+import (
+	"context"
+	"net"
+	"testing"
 
-// 	tvalidate "github.com/Neakxs/protocel/testdata/validate"
-// 	"github.com/Neakxs/protocel/validate"
-// 	"google.golang.org/genproto/googleapis/rpc/context/attribute_context"
-// 	"google.golang.org/grpc"
-// 	"google.golang.org/grpc/metadata"
-// 	"google.golang.org/grpc/peer"
-// 	"google.golang.org/protobuf/proto"
-// )
+	testdata "github.com/Neakxs/protocel/testdata/validate"
+	"github.com/Neakxs/protocel/validate"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/emptypb"
+)
 
-// type validateInterceptor struct {
-// 	mapping map[string]validate.ValidateProgram
-// }
-
-// func (v *validateInterceptor) Validate(ctx context.Context, attr *attribute_context.AttributeContext, m proto.Message) error {
-// 	return validate.NewValidateInterceptor(v.mapping).Validate(ctx, attr, m)
-// }
-
-// func TestNewGRPCUnaryInterceptor(t *testing.T) {
-// 	tests := []struct {
-// 		Name    string
-// 		Expr    string
-// 		Method  string
-// 		Context context.Context
-// 		Request *tvalidate.TestRpcRequest
-// 		Info    *grpc.UnaryServerInfo
-// 		WantErr bool
-// 	}{
-// 		{
-// 			Name:    "Method provided correctly",
-// 			Context: context.Background(),
-// 			Expr:    `attribute_context.api.operation == "full.method"`,
-// 			Method:  "full.method",
-// 			Request: &tvalidate.TestRpcRequest{},
-// 			Info:    &grpc.UnaryServerInfo{FullMethod: "full.method"},
-// 			WantErr: false,
-// 		},
-// 		{
-// 			Name: "Metadata provided correctly",
-// 			Expr: `attribute_context.request.headers["x-metadata"] == "passed"`,
-// 			Context: metadata.NewIncomingContext(context.Background(), metadata.MD{
-// 				"x-metadata": []string{"passed"},
-// 			}),
-// 			Request: &tvalidate.TestRpcRequest{},
-// 			Info:    &grpc.UnaryServerInfo{},
-// 			WantErr: false,
-// 		},
-// 		{
-// 			Name: "Peer provided correctly",
-// 			Expr: `attribute_context.source.ip == "127.0.0.42" && attribute_context.source.port == 4242`,
-// 			Context: peer.NewContext(context.Background(), &peer.Peer{
-// 				Addr: &net.TCPAddr{IP: net.ParseIP("127.0.0.42"), Port: 4242},
-// 			}),
-// 			Request: &tvalidate.TestRpcRequest{},
-// 			Info:    &grpc.UnaryServerInfo{},
-// 			WantErr: false,
-// 		},
-// 		{
-// 			Name:    "Request message provided correctly",
-// 			Expr:    `request.ref == "ref"`,
-// 			Context: context.Background(),
-// 			Request: &tvalidate.TestRpcRequest{
-// 				Ref: "ref",
-// 			},
-// 			Info:    &grpc.UnaryServerInfo{},
-// 			WantErr: false,
-// 		},
-// 		{
-// 			Name:    "Validation error",
-// 			Expr:    `request.ref != "ref"`,
-// 			Context: context.Background(),
-// 			Request: &tvalidate.TestRpcRequest{
-// 				Ref: "ref",
-// 			},
-// 			Info:    &grpc.UnaryServerInfo{},
-// 			WantErr: true,
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.Name, func(t *testing.T) {
-// 			if pgr, err := validate.BuildMethodValidateProgram([]string{tt.Expr}, nil, tvalidate.File_testdata_validate_test_proto.Services().Get(0).Methods().Get(0), nil); err != nil {
-// 				t.Error(err)
-// 			} else if _, err = NewGRPCUnaryInterceptor(&validateInterceptor{mapping: map[string]validate.ValidateProgram{
-// 				tt.Method: pgr,
-// 			}})(tt.Context, tt.Request, tt.Info, func(ctx context.Context, req interface{}) (interface{}, error) { return nil, nil }); (err != nil && !tt.WantErr) || (err == nil && tt.WantErr) {
-// 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
-// 			}
-// 		})
-// 	}
-// }
+func TestNewGRPCUnaryInterceptor(t *testing.T) {
+	tests := []struct {
+		Name    string
+		Desc    protoreflect.MethodDescriptor
+		Context context.Context
+		Request proto.Message
+		Info    *grpc.UnaryServerInfo
+		WantErr bool
+	}{
+		{
+			Name:    "Missing header",
+			Desc:    testdata.File_testdata_validate_service_proto.Services().ByName("ServiceExpr").Methods().ByName("Rpc"),
+			Context: context.Background(),
+			Request: &emptypb.Empty{},
+			Info: &grpc.UnaryServerInfo{
+				FullMethod: "/testdata.validate.ServiceExpr/Rpc",
+			},
+			WantErr: true,
+		},
+		{
+			Name: "Wrong header value",
+			Desc: testdata.File_testdata_validate_service_proto.Services().ByName("ServiceExpr").Methods().ByName("Rpc"),
+			Context: metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{
+				"x-is-admin": "false",
+			})),
+			Request: &emptypb.Empty{},
+			Info: &grpc.UnaryServerInfo{
+				FullMethod: "/testdata.validate.ServiceExpr/Rpc",
+			},
+			WantErr: true,
+		},
+		{
+			Name: "Good header value",
+			Desc: testdata.File_testdata_validate_service_proto.Services().ByName("ServiceExpr").Methods().ByName("Rpc"),
+			Context: metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{
+				"x-is-admin": "true",
+			})),
+			Request: &emptypb.Empty{},
+			Info: &grpc.UnaryServerInfo{
+				FullMethod: "/testdata.validate.ServiceExpr/Rpc",
+			},
+			WantErr: false,
+		},
+		{
+			Name:    "Missing peer context",
+			Desc:    testdata.File_testdata_validate_service_proto.Services().ByName("ServicePeerExpr").Methods().ByName("Rpc"),
+			Context: context.Background(),
+			Request: &emptypb.Empty{},
+			Info: &grpc.UnaryServerInfo{
+				FullMethod: "/testdata.validate.ServicePeerExpr/Rpc",
+			},
+			WantErr: true,
+		},
+		{
+			Name: "Wrong peer context",
+			Desc: testdata.File_testdata_validate_service_proto.Services().ByName("ServicePeerExpr").Methods().ByName("Rpc"),
+			Context: peer.NewContext(context.Background(), &peer.Peer{
+				Addr: &net.IPAddr{IP: net.ParseIP("1.1.1.1")},
+			}),
+			Request: &emptypb.Empty{},
+			Info: &grpc.UnaryServerInfo{
+				FullMethod: "/testdata.validate.ServicePeerExpr/Rpc",
+			},
+			WantErr: true,
+		},
+		{
+			Name: "Wrong peer context (tcp)",
+			Desc: testdata.File_testdata_validate_service_proto.Services().ByName("ServicePeerExpr").Methods().ByName("Rpc"),
+			Context: peer.NewContext(context.Background(), &peer.Peer{
+				Addr: &net.IPAddr{IP: net.ParseIP("1.1.1.1")},
+			}),
+			Request: &emptypb.Empty{},
+			Info: &grpc.UnaryServerInfo{
+				FullMethod: "/testdata.validate.ServicePeerExpr/Rpc",
+			},
+			WantErr: true,
+		},
+		{
+			Name: "Wrong peer context (udp)",
+			Desc: testdata.File_testdata_validate_service_proto.Services().ByName("ServicePeerExpr").Methods().ByName("Rpc"),
+			Context: peer.NewContext(context.Background(), &peer.Peer{
+				Addr: &net.TCPAddr{IP: net.ParseIP("1.1.1.1")},
+			}),
+			Request: &emptypb.Empty{},
+			Info: &grpc.UnaryServerInfo{
+				FullMethod: "/testdata.validate.ServicePeerExpr/Rpc",
+			},
+			WantErr: true,
+		},
+		{
+			Name: "Good peer context",
+			Desc: testdata.File_testdata_validate_service_proto.Services().ByName("ServicePeerExpr").Methods().ByName("Rpc"),
+			Context: peer.NewContext(context.Background(), &peer.Peer{
+				Addr: &net.UDPAddr{IP: net.ParseIP("127.0.0.1")},
+			}),
+			Request: &emptypb.Empty{},
+			Info: &grpc.UnaryServerInfo{
+				FullMethod: "/testdata.validate.ServicePeerExpr/Rpc",
+			},
+			WantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			pgr, err := validate.BuildServiceValidateProgram(nil, tt.Desc.Parent().(protoreflect.ServiceDescriptor), nil, tt.Desc.ParentFile())
+			if err != nil {
+				t.Error(err)
+			}
+			if _, err = NewGRPCUnaryInterceptor(pgr)(tt.Context, tt.Request, tt.Info, func(ctx context.Context, req interface{}) (interface{}, error) { return nil, nil }); (err != nil && !tt.WantErr) || (err == nil && tt.WantErr) {
+				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
+			}
+		})
+	}
+}

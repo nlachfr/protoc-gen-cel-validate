@@ -17,6 +17,13 @@ service ServiceExpr {
     rpc Rpc(google.protobuf.Empty) returns (google.protobuf.Empty) {};
 }
 
+service ServicePeerExpr {
+    option (protocel.validate.service) = {
+        expr: 'attribute_context.origin.ip == "127.0.0.1"'
+    };
+    rpc Rpc(google.protobuf.Empty) returns (google.protobuf.Empty) {};
+}
+
 service ServiceOptions {
     option (protocel.validate.service) = {
         expr: 'attribute_context.request.headers[isAdmHdr] == "true"'
