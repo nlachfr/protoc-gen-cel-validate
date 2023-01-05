@@ -92,3 +92,45 @@ message RpcRequest {
     }];
 }
 ```
+
+## Usage of `protoc-gen-cel-validate`
+
+For writing validation rules, some variables are defined, depending on the scope of the rule.
+
+- for service and method rules, two variables are defined
+  - `attribute_context` (google.rpc.context.AttributeContext), containing transport related metadata
+  - `request` (declared request message type), corresponding to incoming request
+- for message and field rules, all the fields of the message are defined
+
+Furthermore, every message including validation rules provides the `validate()` and `validateWithMask(google.protobuf.FieldMask)` methods, allowing nested validation calls.
+
+## Example
+
+1. Create protobuf definition
+
+```protobuf
+syntax = "proto3";
+
+package testdata.basic;
+option go_package = "github.com/Neakxs/protocel/testdata/validate/basic";
+
+import "validate/validate.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+
+service BasicService {
+    rpc Basic(BasicRequest) returns (google.protobuf.Empty) {
+        option (protocel.validate.method).expr = 'request.validate()';
+    };
+}
+
+message BasicRequest {
+    string name = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (protocel.validate.field).expr = 'name.startswith("names/")'
+    ];
+}
+```
+
+2. Generate protobuf code
+3. For validating message, just call the `Validate` or `ValidateWithMask` methods on the corresponding messages. For validating methods of a service, build a `ServiceValidateProgram` using the generated builder and call the `Validate` method.
