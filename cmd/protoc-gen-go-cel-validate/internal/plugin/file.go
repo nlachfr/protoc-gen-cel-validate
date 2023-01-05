@@ -116,5 +116,5 @@ func (m *Message) Validate() error {
 
 func (m *Message) ContainsValidatePrograms() bool {
 	res, _ := validate.BuildMessageValidateProgram(m.Config, m.Desc, nil, m.Imports...)
-	return len(res) != 0
+	return len(res.FieldPrograms()) != 0
 }

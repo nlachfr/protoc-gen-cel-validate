@@ -3,6 +3,7 @@ syntax = "proto3";
 package testdata.validate;
 option go_package = "github.com/Neakxs/protocel/testdata/validate";
 
+import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "validate/validate.proto";
 
@@ -18,9 +19,26 @@ message Field {
 message FieldExpr {
     string name = 1 [
         (protocel.validate.field) = {
-            expr: 'name != ""'
+            expr: 'name != "name"'
         }
     ];
+}
+
+message FieldsExpr {
+    string name = 1 [
+        (protocel.validate.field) = {
+            expr: 'name != "name"'
+        }
+    ];
+    string display_name = 2 [
+        (protocel.validate.field) = {
+            expr: 'display_name != name'
+        }
+    ];
+}
+
+message FieldRequired {
+    string name = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 message FieldReferenceWrong {

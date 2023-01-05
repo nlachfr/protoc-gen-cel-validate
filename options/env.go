@@ -37,8 +37,10 @@ func BuildEnvOption(options *Options, descs ...protoreflect.MessageDescriptor) c
 				}
 			}
 			for _, desc := range descs {
-				for i := 0; i < desc.Fields().Len(); i++ {
-					reservedNames[desc.Fields().Get(i).TextName()] = true
+				if desc != nil {
+					for i := 0; i < desc.Fields().Len(); i++ {
+						reservedNames[desc.Fields().Get(i).TextName()] = true
+					}
 				}
 			}
 		}

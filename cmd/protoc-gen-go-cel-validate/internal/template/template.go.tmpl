@@ -25,7 +25,7 @@ func init() {
 
 
 {{ range $s := .Services }}
-func New{{.GoName}}ValidateInterceptor(opts ...{{cel "EnvOption"}}) ({{validate "ValidateInterceptor"}}, error) {
+func New{{.GoName}}ValidateProgram(opts ...{{cel "EnvOption"}}) ({{validate "ServiceValidateProgram"}}, error) {
     cfg := &{{validate "ValidateOptions"}}{}
     if err := {{proto "Unmarshal"}}(_{{$file.GoDescriptorIdent.GoName}}_rawValidateOptions,cfg); err != nil {
         return nil, err
@@ -33,7 +33,7 @@ func New{{.GoName}}ValidateInterceptor(opts ...{{cel "EnvOption"}}) ({{validate 
     if m, err := {{validate "BuildServiceValidateProgram"}}(cfg, {{$file.GoDescriptorIdent.GoName}}.Services().Get({{$s.Desc.Index}}), {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts}), _{{$file.GoDescriptorIdent.GoName}}_validateImports...); err != nil {
         return nil, err
     } else {
-        return {{validate "NewValidateInterceptor"}}(m), nil
+        return m, nil
     }
 }
 {{- end}}
@@ -41,8 +41,8 @@ func New{{.GoName}}ValidateInterceptor(opts ...{{cel "EnvOption"}}) ({{validate 
 {{range $messageNo,$m := .Messages}}
 {{if $m.ContainsValidatePrograms}}
 var (
-    _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap map[string]*{{validate "Program"}} = nil
-	_{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMapOnce {{sync "Once"}}
+    _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_validateProgram {{validate "MessageValidateProgram"}} = nil
+	_{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_validateProgramOnce {{sync "Once"}}
 )
 
 func (m *{{$m.GoIdent.GoName}}) Validate(ctx {{context "Context"}}, opts ...{{cel "EnvOption"}}) error {
@@ -52,21 +52,20 @@ func (m *{{$m.GoIdent.GoName}}) Validate(ctx {{context "Context"}}, opts ...{{ce
 }
 
 func (m *{{$m.GoIdent.GoName}}) ValidateWithMask(ctx {{context "Context"}}, fm *{{fieldmaskpb "FieldMask"}}, opts ...{{cel "EnvOption"}}) error {
-    _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMapOnce.Do(func() {
+    _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_validateProgramOnce.Do(func() {
         cfg := &{{validate "ValidateOptions"}}{}
         if err := {{proto "Unmarshal"}}(_{{$file.GoDescriptorIdent.GoName}}_rawValidateOptions,cfg); err != nil {
             return
         }
         m, err := {{validate "BuildMessageValidateProgram"}}(cfg, m.ProtoReflect().Descriptor(), {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts}), _{{$file.GoDescriptorIdent.GoName}}_validateImports...); 
         if err == nil {
-            _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap = m
+            _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_validateProgram = m
         }
     })
-    {{- if .Config.RequiredSupportDisabled}}
-    return {{validate "ValidateWithMask"}}(ctx, m, fm, _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap, false)
-    {{else}}
-    return {{validate "ValidateWithMask"}}(ctx, m, fm, _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_celValidateMap, true)
-    {{end -}}
+    if  _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_validateProgram != nil {
+        return _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_validateProgram.ValidateWithMask(ctx, m, fm)
+    }
+    return nil
 }
 {{else}}
 func (m *{{$m.GoIdent.GoName}}) Validate(ctx {{context "Context"}}) error {
