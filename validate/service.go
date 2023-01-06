@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Neakxs/protocel/options"
+	"github.com/Neakxs/protocel/validate/errors"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"google.golang.org/genproto/googleapis/rpc/context/attribute_context"
@@ -17,22 +18,23 @@ type ServiceValidateProgram interface {
 }
 
 type serviceValidateProgram struct {
+	methodsDesc     map[string]protoreflect.MethodDescriptor
 	methodsPrograms map[string]ValidateProgram
 }
 
-func (p *serviceValidateProgram) Validate(ctx context.Context, attr *attribute_context.AttributeContext, m proto.Message) error {
+func (vp *serviceValidateProgram) Validate(ctx context.Context, attr *attribute_context.AttributeContext, m proto.Message) error {
 	if attr == nil || attr.Api == nil {
 		return nil
-	} else if pgr, ok := p.methodsPrograms[attr.Api.Operation]; ok {
+	} else if pgr, ok := vp.methodsPrograms[attr.Api.Operation]; ok {
 		req := map[string]interface{}{
 			"attribute_context": attr,
 			"request":           m,
 		}
 		for _, p := range pgr.CEL() {
 			if val, _, err := p.ContextEval(ctx, req); err != nil {
-				return err
+				return errors.Wrap(err, m, vp.methodsDesc[attr.Api.Operation], attr)
 			} else if !types.IsBool(val) || !val.Value().(bool) {
-				return &MethodValidationError{AttributeContext: attr}
+				return errors.New(m, vp.methodsDesc[attr.Api.Operation], attr)
 			}
 		}
 	}
@@ -47,6 +49,7 @@ func BuildServiceValidateProgram(config *ValidateOptions, desc protoreflect.Serv
 	if serviceRule != nil {
 		config.Options = options.Join(config.Options, serviceRule.Options)
 	}
+	descs := map[string]protoreflect.MethodDescriptor{}
 	m := map[string]ValidateProgram{}
 	for i := 0; i < desc.Methods().Len(); i++ {
 		methodDesc := desc.Methods().Get(i)
@@ -71,8 +74,9 @@ func BuildServiceValidateProgram(config *ValidateOptions, desc protoreflect.Serv
 				m[fmt.Sprintf("/%s/%s", string(desc.FullName()), string(methodDesc.Name()))] = pgr
 			}
 		}
+		descs[fmt.Sprintf("/%s/%s", string(desc.FullName()), string(methodDesc.Name()))] = methodDesc
 	}
-	return &serviceValidateProgram{methodsPrograms: m}, nil
+	return &serviceValidateProgram{methodsDesc: descs, methodsPrograms: m}, nil
 }
 
 func BuildMethodValidateProgram(exprs []string, config *ValidateOptions, desc protoreflect.MethodDescriptor, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (ValidateProgram, error) {
