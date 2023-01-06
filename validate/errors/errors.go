@@ -76,4 +76,4 @@ func (e *validateError) ConvertToType(typeVal ref.Type) ref.Val                 
 func (e *validateError) Equal(other ref.Val) ref.Val                                { return e }
 func (e *validateError) String() string                                             { return e.Error() }
 func (e *validateError) Type() ref.Type                                             { return types.ErrType }
-func (e *validateError) Value() interface{}
+func (e *validateError) Value() interface{}                                         { return e }
