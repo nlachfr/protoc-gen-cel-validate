@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Neakxs/protocel/validate/errors"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
@@ -21,8 +22,8 @@ func buildValidateFunctionOpt(name string, t string) cel.FunctionOpt {
 			if v, ok := value.Value().(Validater); ok {
 				if err := v.Validate(context.TODO()); err == nil {
 					return types.Bool(true)
-				} else if validationErr, ok := err.(*ValidationError); ok {
-					return validationErr
+				} else if vErr, ok := err.(errors.ValidateError); ok {
+					return vErr
 				} else {
 					return types.NewErr(err.Error())
 				}
@@ -42,8 +43,8 @@ func buildValidateWithMaskFunctionOpt(name string, t string) cel.FunctionOpt {
 				if fm, ok := rhs.Value().(*fieldmaskpb.FieldMask); ok {
 					if err := v.ValidateWithMask(context.TODO(), fm); err == nil {
 						return types.Bool(true)
-					} else if validationErr, ok := err.(*ValidationError); ok {
-						return validationErr
+					} else if vErr, ok := err.(errors.ValidateError); ok {
+						return vErr
 					} else {
 						return types.NewErr(err.Error())
 					}
