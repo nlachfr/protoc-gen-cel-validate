@@ -9,6 +9,7 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "testdata/validate/ref.proto";
 
+import "validate/validate.proto";
 
 service TestService {
     rpc TestRpc(TestRpcRequest) returns (google.protobuf.Empty) {};
@@ -21,10 +22,11 @@ message TestRpcRequest {
     ];
     Nested nested = 2;
     google.protobuf.FieldMask fm = 3;
+    string raw = 4  [(protocel.validate.field).expr = 'raw != ""'];
 }
 
 message Nested {
-    string name = 1;
+    string name = 1 [(protocel.validate.field).expr = 'name != ""'];
     string value = 2;
     RefMultiple ref = 3;
 }
