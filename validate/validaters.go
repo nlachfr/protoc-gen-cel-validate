@@ -75,17 +75,24 @@ func buildValidaterFunction(name string, optBuilder func(name string, t string) 
 
 func buildValidaterFunctionOpts(name string, optBuilder func(name string, t string) cel.FunctionOpt, desc protoreflect.MessageDescriptor, m map[string]bool) []cel.FunctionOpt {
 	functionOpts := []cel.FunctionOpt{}
-	for i := 0; i < desc.Fields().Len(); i++ {
-		fd := desc.Fields().Get(i)
-		if proto.GetExtension(fd.Options(), E_Field) != nil {
-			t := string(desc.FullName())
-			if _, ok := m[t]; !ok {
-				functionOpts = append(functionOpts, optBuilder(name, t))
-				m[t] = true
+	messageType := string(desc.FullName())
+	if _, ok := m[messageType]; !ok {
+		m[messageType] = true
+		buildValidate := false
+		if proto.GetExtension(desc.Options(), E_Message).(*ValidateRule) != nil {
+			buildValidate = true
+		}
+		for i := 0; i < desc.Fields().Len(); i++ {
+			fd := desc.Fields().Get(i)
+			if proto.GetExtension(fd.Options(), E_Field).(*ValidateRule) != nil {
+				buildValidate = true
+			}
+			if fd.Kind() == protoreflect.MessageKind {
+				functionOpts = append(functionOpts, buildValidaterFunctionOpts(name, optBuilder, fd.Message(), m)...)
 			}
 		}
-		if fd.Kind() == protoreflect.MessageKind {
-			functionOpts = append(functionOpts, buildValidaterFunctionOpts(name, optBuilder, fd.Message(), m)...)
+		if buildValidate {
+			functionOpts = append(functionOpts, optBuilder(name, messageType))
 		}
 	}
 	return functionOpts
