@@ -16,6 +16,17 @@ message MessageExpr {
     string name = 1;
 }
 
+message MessageNested {
+    MessageExpr message_expr = 1;
+};
+
+message MessageNestedExpr {
+    option (protocel.validate.message) = {
+        expr: 'message_expr.name != ""'
+    };
+    MessageExpr message_expr = 1;
+};
+
 message MessageOptions {
     option (protocel.validate.message) = {
         expr: 'name != emptyName'
