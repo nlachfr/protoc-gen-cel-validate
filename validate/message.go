@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Neakxs/protocel/options"
+	"github.com/Neakxs/protocel/validate/errors"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"google.golang.org/genproto/googleapis/api/annotations"
@@ -87,18 +88,16 @@ func (p *messageValidateProgram) ValidateWithMask(ctx context.Context, m proto.M
 							if pgr.Program() != nil {
 								for _, p := range pgr.Program().CEL() {
 									if val, _, err := p.ContextEval(ctx, vars); err != nil {
-										return err
+										return errors.Wrap(err, m, fdesc, nil)
 									} else if !types.IsBool(val) || !val.Value().(bool) {
-										fmt.Println(fdesc.TextName(), pgr, val)
-										return &ValidationError{Descriptor: fdesc}
+										return errors.New(m, fdesc, nil)
 									}
 								}
-
 							}
 						} else if pgr.IsRequired() {
 							for _, behavior := range proto.GetExtension(fdesc.Options(), annotations.E_FieldBehavior).([]annotations.FieldBehavior) {
 								if behavior == annotations.FieldBehavior_REQUIRED {
-									return &ValidationError{Descriptor: fdesc}
+									return errors.New(m, fdesc, nil)
 								}
 							}
 						}
@@ -110,7 +109,7 @@ func (p *messageValidateProgram) ValidateWithMask(ctx context.Context, m proto.M
 			if len(subs) > 0 && fdesc.Kind() == protoreflect.MessageKind {
 				if v, ok := m.ProtoReflect().Get(fdesc).Message().Interface().(Validater); ok {
 					if err := v.ValidateWithMask(ctx, &fieldmaskpb.FieldMask{Paths: subs}); err != nil {
-						return err
+						return errors.Wrap(err, m, fdesc, nil)
 					}
 				}
 			}

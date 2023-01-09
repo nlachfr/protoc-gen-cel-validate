@@ -258,7 +258,7 @@ func TestBuildMethodValidateProgram(t *testing.T) {
 			if pgr, err := BuildMethodValidateProgram([]string{tt.Expr}, nil, tt.Desc, tt.EnvOpt); err != nil {
 				ferr = err
 			} else {
-				ferr = (&serviceValidateProgram{map[string]ValidateProgram{tt.Method: pgr}}).Validate(context.Background(), tt.Context, tt.Request)
+				ferr = (&serviceValidateProgram{map[string]protoreflect.MethodDescriptor{tt.Method: tt.Desc}, map[string]ValidateProgram{tt.Method: pgr}}).Validate(context.Background(), tt.Context, tt.Request)
 			}
 			if (ferr != nil && !tt.WantErr) || (ferr == nil && tt.WantErr) {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, ferr)
