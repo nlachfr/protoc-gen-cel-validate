@@ -383,6 +383,10 @@ func TestTranslateMacroExpr(t *testing.T) {
 
 type exprHelper struct{}
 
+func (*exprHelper) Copy(e *v1alpha1.Expr) *v1alpha1.Expr {
+	return e
+}
+
 func (*exprHelper) LiteralBool(value bool) *v1alpha1.Expr {
 	return &v1alpha1.Expr{ExprKind: &v1alpha1.Expr_ConstExpr{
 		ConstExpr: &v1alpha1.Constant{
@@ -458,12 +462,13 @@ func (*exprHelper) NewMap(entries ...*v1alpha1.Expr_CreateStruct_Entry) *v1alpha
 	}}
 }
 
-func (*exprHelper) NewMapEntry(key *v1alpha1.Expr, val *v1alpha1.Expr) *v1alpha1.Expr_CreateStruct_Entry {
+func (*exprHelper) NewMapEntry(key *v1alpha1.Expr, val *v1alpha1.Expr, optional bool) *v1alpha1.Expr_CreateStruct_Entry {
 	return &v1alpha1.Expr_CreateStruct_Entry{
 		KeyKind: &v1alpha1.Expr_CreateStruct_Entry_MapKey{
 			MapKey: key,
 		},
-		Value: val,
+		Value:         val,
+		OptionalEntry: optional,
 	}
 }
 
@@ -476,12 +481,13 @@ func (*exprHelper) NewObject(typeName string, fieldInits ...*v1alpha1.Expr_Creat
 	}}
 }
 
-func (*exprHelper) NewObjectFieldInit(field string, init *v1alpha1.Expr) *v1alpha1.Expr_CreateStruct_Entry {
+func (*exprHelper) NewObjectFieldInit(field string, init *v1alpha1.Expr, optional bool) *v1alpha1.Expr_CreateStruct_Entry {
 	return &v1alpha1.Expr_CreateStruct_Entry{
 		KeyKind: &v1alpha1.Expr_CreateStruct_Entry_FieldKey{
 			FieldKey: field,
 		},
-		Value: init,
+		Value:         init,
+		OptionalEntry: optional,
 	}
 }
 
