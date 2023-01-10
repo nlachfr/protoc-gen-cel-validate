@@ -83,9 +83,9 @@ func translateMacroExpr(e *v1alpha1.Expr, eh parser.ExprHelper) *v1alpha1.Expr {
 			entry := exp.StructExpr.Entries[i]
 			switch eexp := entry.KeyKind.(type) {
 			case *v1alpha1.Expr_CreateStruct_Entry_FieldKey:
-				fieldInits = append(fieldInits, eh.NewObjectFieldInit(eexp.FieldKey, entry.Value))
+				fieldInits = append(fieldInits, eh.NewObjectFieldInit(eexp.FieldKey, entry.Value, entry.OptionalEntry))
 			case *v1alpha1.Expr_CreateStruct_Entry_MapKey:
-				fieldInits = append(fieldInits, eh.NewMapEntry(eexp.MapKey, entry.Value))
+				fieldInits = append(fieldInits, eh.NewMapEntry(eexp.MapKey, entry.Value, entry.OptionalEntry))
 			}
 		}
 		return eh.NewObject(exp.StructExpr.MessageName, fieldInits...)
