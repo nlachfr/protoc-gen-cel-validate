@@ -45,7 +45,13 @@ func BuildServiceValidateProgram(config *ValidateOptions, desc protoreflect.Serv
 	if config == nil {
 		config = &ValidateOptions{}
 	}
-	serviceRule := proto.GetExtension(desc.Options(), E_Service).(*ValidateRule)
+	var serviceRule *ValidateRule
+	if config.Rules != nil {
+		serviceRule = config.Rules[string(desc.FullName())]
+	}
+	if r := proto.GetExtension(desc.Options(), E_Service).(*ValidateRule); r != nil {
+		serviceRule = r
+	}
 	if serviceRule != nil {
 		config.Options = options.Join(config.Options, serviceRule.Options)
 	}
@@ -54,7 +60,14 @@ func BuildServiceValidateProgram(config *ValidateOptions, desc protoreflect.Serv
 	for i := 0; i < desc.Methods().Len(); i++ {
 		methodDesc := desc.Methods().Get(i)
 		exprs := []string{}
-		if methodRule := proto.GetExtension(methodDesc.Options(), E_Method).(*ValidateRule); methodRule != nil {
+		var methodRule *ValidateRule
+		if config.Rules != nil {
+			methodRule = config.Rules[string(methodDesc.FullName())]
+		}
+		if r := proto.GetExtension(methodDesc.Options(), E_Method).(*ValidateRule); r != nil {
+			methodRule = r
+		}
+		if methodRule != nil {
 			exprs = methodRule.Exprs
 			if methodRule.Expr != "" {
 				exprs = append([]string{methodRule.Expr}, exprs...)

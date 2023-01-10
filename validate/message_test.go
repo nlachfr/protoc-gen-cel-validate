@@ -139,6 +139,25 @@ func TestBuildMessageValidateProgram(t *testing.T) {
 			WantErr: false,
 		},
 		{
+			Name: "Message config expr with const conflict",
+			Desc: validate.File_testdata_validate_message_proto.Messages().ByName("Message"),
+			Config: &ValidateOptions{
+				Options: &options.Options{
+					Globals: &options.Options_Globals{
+						Constants: map[string]string{
+							"emptyName": "",
+						},
+					},
+				},
+				Rules: map[string]*ValidateRule{
+					string(validate.File_testdata_validate_message_proto.Messages().ByName("Message").FullName()): {
+						Expr: `name != ""`,
+					},
+				},
+			},
+			WantErr: false,
+		},
+		{
 			Name:    "Field level expr",
 			Desc:    validate.File_testdata_validate_field_proto.Messages().ByName("FieldExpr"),
 			WantErr: false,
@@ -201,6 +220,25 @@ func TestBuildMessageValidateProgram(t *testing.T) {
 						Constants: map[string]string{
 							"emptyName": "",
 						},
+					},
+				},
+			},
+			WantErr: false,
+		},
+		{
+			Name: "Field config expr with const conflict",
+			Desc: validate.File_testdata_validate_message_proto.Messages().ByName("Message"),
+			Config: &ValidateOptions{
+				Options: &options.Options{
+					Globals: &options.Options_Globals{
+						Constants: map[string]string{
+							"emptyName": "",
+						},
+					},
+				},
+				Rules: map[string]*ValidateRule{
+					string(validate.File_testdata_validate_message_proto.Messages().ByName("Message").Fields().ByName("name").FullName()): {
+						Expr: `name != ""`,
 					},
 				},
 			},

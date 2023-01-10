@@ -27,9 +27,10 @@ type ValidateOptions struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Options                          *options.Options `protobuf:"bytes,1,opt,name=options,proto3" json:"options,omitempty"`
-	RequiredSupportDisabled          bool             `protobuf:"varint,2,opt,name=required_support_disabled,json=requiredSupportDisabled,proto3" json:"required_support_disabled,omitempty"`
-	ResourceReferenceSupportDisabled bool             `protobuf:"varint,3,opt,name=resource_reference_support_disabled,json=resourceReferenceSupportDisabled,proto3" json:"resource_reference_support_disabled,omitempty"`
+	Options                          *options.Options         `protobuf:"bytes,1,opt,name=options,proto3" json:"options,omitempty"`
+	RequiredSupportDisabled          bool                     `protobuf:"varint,2,opt,name=required_support_disabled,json=requiredSupportDisabled,proto3" json:"required_support_disabled,omitempty"`
+	ResourceReferenceSupportDisabled bool                     `protobuf:"varint,3,opt,name=resource_reference_support_disabled,json=resourceReferenceSupportDisabled,proto3" json:"resource_reference_support_disabled,omitempty"`
+	Rules                            map[string]*ValidateRule `protobuf:"bytes,4,rep,name=rules,proto3" json:"rules,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *ValidateOptions) Reset() {
@@ -83,6 +84,13 @@ func (x *ValidateOptions) GetResourceReferenceSupportDisabled() bool {
 		return x.ResourceReferenceSupportDisabled
 	}
 	return false
+}
+
+func (x *ValidateOptions) GetRules() map[string]*ValidateRule {
+	if x != nil {
+		return x.Rules
+	}
+	return nil
 }
 
 type ValidateRule struct {
@@ -230,7 +238,7 @@ var file_validate_validate_proto_rawDesc = []byte{
 	0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x64, 0x65,
 	0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x15,
 	0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xd1, 0x01, 0x0a, 0x0f, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xf1, 0x02, 0x0a, 0x0f, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
 	0x74, 0x65, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x33, 0x0a, 0x07, 0x6f, 0x70, 0x74,
 	0x69, 0x6f, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x63, 0x65, 0x6c, 0x2e, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x4f, 0x70,
@@ -243,7 +251,17 @@ var file_validate_validate_proto_rawDesc = []byte{
 	0x5f, 0x73, 0x75, 0x70, 0x70, 0x6f, 0x72, 0x74, 0x5f, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65,
 	0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x20, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
 	0x65, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x53, 0x75, 0x70, 0x70, 0x6f, 0x72,
-	0x74, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x22, 0x6d, 0x0a, 0x0c, 0x56, 0x61, 0x6c,
+	0x74, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x12, 0x43, 0x0a, 0x05, 0x72, 0x75, 0x6c,
+	0x65, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2d, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x63, 0x65, 0x6c, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x65, 0x2e, 0x56, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x65, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x52, 0x75, 0x6c,
+	0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x05, 0x72, 0x75, 0x6c, 0x65, 0x73, 0x1a, 0x59,
+	0x0a, 0x0a, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03,
+	0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x35,
+	0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x65, 0x6c, 0x2e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
+	0x65, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x65, 0x52, 0x75, 0x6c, 0x65, 0x52, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x6d, 0x0a, 0x0c, 0x56, 0x61, 0x6c,
 	0x69, 0x64, 0x61, 0x74, 0x65, 0x52, 0x75, 0x6c, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x65, 0x78, 0x70,
 	0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x65, 0x78, 0x70, 0x72, 0x12, 0x14, 0x0a,
 	0x05, 0x65, 0x78, 0x70, 0x72, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x05, 0x65, 0x78,
@@ -296,35 +314,38 @@ func file_validate_validate_proto_rawDescGZIP() []byte {
 	return file_validate_validate_proto_rawDescData
 }
 
-var file_validate_validate_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_validate_validate_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_validate_validate_proto_goTypes = []interface{}{
 	(*ValidateOptions)(nil),             // 0: protocel.validate.ValidateOptions
 	(*ValidateRule)(nil),                // 1: protocel.validate.ValidateRule
-	(*options.Options)(nil),             // 2: protocel.options.Options
-	(*descriptorpb.FileOptions)(nil),    // 3: google.protobuf.FileOptions
-	(*descriptorpb.ServiceOptions)(nil), // 4: google.protobuf.ServiceOptions
-	(*descriptorpb.MethodOptions)(nil),  // 5: google.protobuf.MethodOptions
-	(*descriptorpb.MessageOptions)(nil), // 6: google.protobuf.MessageOptions
-	(*descriptorpb.FieldOptions)(nil),   // 7: google.protobuf.FieldOptions
+	nil,                                 // 2: protocel.validate.ValidateOptions.RulesEntry
+	(*options.Options)(nil),             // 3: protocel.options.Options
+	(*descriptorpb.FileOptions)(nil),    // 4: google.protobuf.FileOptions
+	(*descriptorpb.ServiceOptions)(nil), // 5: google.protobuf.ServiceOptions
+	(*descriptorpb.MethodOptions)(nil),  // 6: google.protobuf.MethodOptions
+	(*descriptorpb.MessageOptions)(nil), // 7: google.protobuf.MessageOptions
+	(*descriptorpb.FieldOptions)(nil),   // 8: google.protobuf.FieldOptions
 }
 var file_validate_validate_proto_depIdxs = []int32{
-	2,  // 0: protocel.validate.ValidateOptions.options:type_name -> protocel.options.Options
-	2,  // 1: protocel.validate.ValidateRule.options:type_name -> protocel.options.Options
-	3,  // 2: protocel.validate.file:extendee -> google.protobuf.FileOptions
-	4,  // 3: protocel.validate.service:extendee -> google.protobuf.ServiceOptions
-	5,  // 4: protocel.validate.method:extendee -> google.protobuf.MethodOptions
-	6,  // 5: protocel.validate.message:extendee -> google.protobuf.MessageOptions
-	7,  // 6: protocel.validate.field:extendee -> google.protobuf.FieldOptions
-	0,  // 7: protocel.validate.file:type_name -> protocel.validate.ValidateOptions
-	1,  // 8: protocel.validate.service:type_name -> protocel.validate.ValidateRule
-	1,  // 9: protocel.validate.method:type_name -> protocel.validate.ValidateRule
-	1,  // 10: protocel.validate.message:type_name -> protocel.validate.ValidateRule
-	1,  // 11: protocel.validate.field:type_name -> protocel.validate.ValidateRule
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	7,  // [7:12] is the sub-list for extension type_name
-	2,  // [2:7] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	3,  // 0: protocel.validate.ValidateOptions.options:type_name -> protocel.options.Options
+	2,  // 1: protocel.validate.ValidateOptions.rules:type_name -> protocel.validate.ValidateOptions.RulesEntry
+	3,  // 2: protocel.validate.ValidateRule.options:type_name -> protocel.options.Options
+	1,  // 3: protocel.validate.ValidateOptions.RulesEntry.value:type_name -> protocel.validate.ValidateRule
+	4,  // 4: protocel.validate.file:extendee -> google.protobuf.FileOptions
+	5,  // 5: protocel.validate.service:extendee -> google.protobuf.ServiceOptions
+	6,  // 6: protocel.validate.method:extendee -> google.protobuf.MethodOptions
+	7,  // 7: protocel.validate.message:extendee -> google.protobuf.MessageOptions
+	8,  // 8: protocel.validate.field:extendee -> google.protobuf.FieldOptions
+	0,  // 9: protocel.validate.file:type_name -> protocel.validate.ValidateOptions
+	1,  // 10: protocel.validate.service:type_name -> protocel.validate.ValidateRule
+	1,  // 11: protocel.validate.method:type_name -> protocel.validate.ValidateRule
+	1,  // 12: protocel.validate.message:type_name -> protocel.validate.ValidateRule
+	1,  // 13: protocel.validate.field:type_name -> protocel.validate.ValidateRule
+	14, // [14:14] is the sub-list for method output_type
+	14, // [14:14] is the sub-list for method input_type
+	9,  // [9:14] is the sub-list for extension type_name
+	4,  // [4:9] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_validate_validate_proto_init() }
@@ -364,7 +385,7 @@ func file_validate_validate_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_validate_validate_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 5,
 			NumServices:   0,
 		},

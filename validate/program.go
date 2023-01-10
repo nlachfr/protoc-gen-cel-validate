@@ -25,10 +25,6 @@ type validateProgram struct {
 
 func (p *validateProgram) CEL() map[string]cel.Program { return p.rules }
 
-type Program struct {
-	rules []cel.Program
-}
-
 func BuildValidateProgram(exprs []string, config *ValidateOptions, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (ValidateProgram, error) {
 	envOpts := []cel.EnvOption{cel.Types(&fieldmaskpb.FieldMask{})}
 	if envOpt != nil {
