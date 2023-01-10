@@ -51,6 +51,25 @@ func TestBuildServiceValidateProgram(t *testing.T) {
 			WantErr: false,
 		},
 		{
+			Name: "Service config expr with global const",
+			Desc: validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("Service")),
+			Config: &ValidateOptions{
+				Options: &options.Options{
+					Globals: &options.Options_Globals{
+						Constants: map[string]string{
+							"isAdmHdr": "x-is-admin",
+						},
+					},
+				},
+				Rules: map[string]*ValidateRule{
+					string(validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("Service")).FullName()): {
+						Expr: `attribute_context.request.headers[isAdmHdr] == "true"`,
+					},
+				},
+			},
+			WantErr: false,
+		},
+		{
 			Name:    "Service level expr with local const",
 			Desc:    validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("ServiceLocalOptions")),
 			WantErr: false,
@@ -107,6 +126,25 @@ func TestBuildServiceValidateProgram(t *testing.T) {
 						Constants: map[string]string{
 							"isAdmHdr": "x-is-admin",
 						},
+					},
+				},
+			},
+			WantErr: false,
+		},
+		{
+			Name: "Method config with const conflict",
+			Desc: validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("Service")),
+			Config: &ValidateOptions{
+				Options: &options.Options{
+					Globals: &options.Options_Globals{
+						Constants: map[string]string{
+							"isAdmHdr": "x-is-admin",
+						},
+					},
+				},
+				Rules: map[string]*ValidateRule{
+					string(validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("Service")).Methods().ByName("Rpc").FullName()): {
+						Expr: `attribute_context.request.headers["x-is-admin"] == "true"`,
 					},
 				},
 			},
