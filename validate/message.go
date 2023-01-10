@@ -122,7 +122,13 @@ func BuildMessageValidateProgram(config *ValidateOptions, desc protoreflect.Mess
 	if config == nil {
 		config = &ValidateOptions{}
 	}
-	messageRule := proto.GetExtension(desc.Options(), E_Message).(*ValidateRule)
+	var messageRule *ValidateRule
+	if config.Rules != nil {
+		messageRule = config.Rules[string(desc.FullName())]
+	}
+	if r := proto.GetExtension(desc.Options(), E_Message).(*ValidateRule); r != nil {
+		messageRule = r
+	}
 	if messageRule != nil {
 		config.Options = options.Join(config.Options, messageRule.Options)
 	}
@@ -149,7 +155,13 @@ func BuildFieldValidateProgram(config *ValidateOptions, desc protoreflect.FieldD
 	if config == nil {
 		config = &ValidateOptions{}
 	}
-	fieldRule := proto.GetExtension(desc.Options(), E_Field).(*ValidateRule)
+	var fieldRule *ValidateRule
+	if config.Rules != nil {
+		fieldRule = config.Rules[string(desc.FullName())]
+	}
+	if r := proto.GetExtension(desc.Options(), E_Field).(*ValidateRule); r != nil {
+		fieldRule = r
+	}
 	if fieldRule != nil {
 		config.Options = options.Join(config.Options, fieldRule.Options)
 	}
