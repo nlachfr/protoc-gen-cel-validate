@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func NewGRPCUnaryInterceptor(validateHandler validate.ServiceValidateProgram) grpc.UnaryServerInterceptor {
+func NewGRPCUnaryInterceptor(validateHandler validate.ServiceValidateProgram, errorHandler func(err error) error) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		attr := &attribute_context.AttributeContext{
 			Api: &attribute_context.AttributeContext_Api{
@@ -50,6 +50,9 @@ func NewGRPCUnaryInterceptor(validateHandler validate.ServiceValidateProgram) gr
 			attr.Source = pr
 		}
 		if err := validateHandler.Validate(ctx, attr, req.(proto.Message)); err != nil {
+			if errorHandler != nil {
+				return nil, errorHandler(err)
+			}
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 		return handler(ctx, req)
