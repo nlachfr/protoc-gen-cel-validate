@@ -148,7 +148,7 @@ func TestBuildValidateProgram(t *testing.T) {
 				lib.EnvOpts = append(lib.EnvOpts, tt.EnvOption)
 			}
 			lib.EnvOpts = append(lib.EnvOpts, cel.DeclareContextProto(tt.Desc))
-			lib.EnvOpts = append(lib.EnvOpts, buildValidatersFunctions(tt.Desc)...)
+			lib.EnvOpts = append(lib.EnvOpts, buildValidatersFunctions(tt.Config, tt.Desc, tt.EnvOption)...)
 			if tt.Config == nil {
 				lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(nil, tt.Desc))
 			} else {

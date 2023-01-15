@@ -137,7 +137,7 @@ func BuildMessageValidateProgram(config *ValidateOptions, desc protoreflect.Mess
 		lib.EnvOpts = append(lib.EnvOpts, envOpt)
 	}
 	lib.EnvOpts = append(lib.EnvOpts, cel.DeclareContextProto(desc))
-	lib.EnvOpts = append(lib.EnvOpts, buildValidatersFunctions(desc)...)
+	lib.EnvOpts = append(lib.EnvOpts, buildValidatersFunctions(config, desc, envOpt, imports...)...)
 	envOpt = cel.Lib(lib)
 	m := map[string]FieldValidateProgram{}
 	for i := 0; i < desc.Fields().Len(); i++ {
