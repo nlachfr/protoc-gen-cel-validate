@@ -3,9 +3,7 @@ package validate
 import (
 	"context"
 	"fmt"
-	reflect "reflect"
 
-	"github.com/Neakxs/protocel/validate/errors"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
@@ -73,19 +71,9 @@ func (b *validateOverloadBuilder) buildFunctionOpts(desc protoreflect.MessageDes
 			functionOpts = append(functionOpts, optBuilder(name, messageType))
 		}
 	}
+	fmt.Println(m)
 	return functionOpts
 }
-
-type customErr struct {
-	error
-}
-
-func (e *customErr) Error() string                                      { return e.error.Error() }
-func (e *customErr) ConvertToNative(typeDesc reflect.Type) (any, error) { return nil, e }
-func (e *customErr) ConvertToType(typeValue ref.Type) ref.Val           { return e }
-func (e *customErr) Equal(other ref.Val) ref.Val                        { return e }
-func (e *customErr) Type() ref.Type                                     { return types.ErrType }
-func (e *customErr) Value() any                                         { return e }
 
 func (b *validateOverloadBuilder) ValidateFunctionOpt(name, t string) cel.FunctionOpt {
 	return cel.MemberOverload(
@@ -96,9 +84,6 @@ func (b *validateOverloadBuilder) ValidateFunctionOpt(name, t string) cel.Functi
 			var err error
 			if v, ok := value.Value().(Validater); ok {
 				err = v.Validate(context.TODO())
-				msg := v.(proto.Message)
-				err = errors.New(msg, msg.ProtoReflect().Descriptor(), nil)
-				fmt.Println(err)
 			} else if msg, ok := value.Value().(proto.Message); ok {
 				desc := msg.ProtoReflect().Descriptor()
 				pgr, ok := b.fallback[string(desc.FullName())]
@@ -113,15 +98,11 @@ func (b *validateOverloadBuilder) ValidateFunctionOpt(name, t string) cel.Functi
 			} else {
 				return types.Bool(false)
 			}
-			fmt.Printf("%v %t %T\n", err, err, err)
 			if err == nil {
-				fmt.Println("1")
 				return types.Bool(true)
 			} else if vErr, ok := err.(ref.Val); ok {
-				fmt.Println("2", vErr)
-				return &customErr{fmt.Errorf("?")}
+				return vErr
 			} else {
-				fmt.Println("3")
 				return types.NewErr(err.Error())
 			}
 		}),
