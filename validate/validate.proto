@@ -7,34 +7,62 @@ import "google/protobuf/descriptor.proto";
 import "options/options.proto";
 
 extend google.protobuf.FileOptions {
-    ValidateOptions file = 1178;
-}
-
-message ValidateOptions {
-    protocel.options.Options options = 1;
-    bool required_support_disabled = 2;
-    bool resource_reference_support_disabled = 3;
-    map<string,ValidateRule> rules = 4;
+    FileRule file = 1178;
 }
 
 extend google.protobuf.ServiceOptions {
-    ValidateRule service = 1178;
+    ServiceRule service = 1178;
 }
 
 extend google.protobuf.MethodOptions {
-    ValidateRule method = 1178;
+    MethodRule method = 1178;
 }
 
 extend google.protobuf.MessageOptions {
-    ValidateRule message = 1178;
+    MessageRule message = 1178;
 }
 
 extend google.protobuf.FieldOptions {
-    ValidateRule field = 1178;
+    FieldRule field = 1178;
 }
 
-message ValidateRule {
-    string expr = 1;
-    repeated string exprs = 2;
-    protocel.options.Options options = 3;
+message Options {
+    FileRule rule = 1;
+    bool required_support_disabled = 2;
+    bool resource_reference_support_disabled = 3;
+}
+
+message FileRule {
+    protocel.options.Options options = 1;
+    map<string,ServiceRule> service_rules = 2;
+    map<string,MessageRule> message_rules = 3;
+}
+
+message ServiceRule {
+    protocel.options.Options options = 1;
+    Rule rule = 2;
+    map<string,MethodRule> method_rules = 3;
+}
+
+message MethodRule {
+    Rule rule = 1;
+}
+
+message MessageRule {
+    protocel.options.Options options = 1;
+    Rule rule = 2;
+    map<string,FieldRule> field_rules = 3;
+}
+
+message FieldRule {
+    Rule rule = 1;
+}
+
+message Rule {
+    message Program {
+        string id = 1;
+        string expr = 2;
+    }
+    protocel.options.Options options = 1;
+    repeated Program programs = 2;
 }
