@@ -14,34 +14,28 @@ var (
         {{ printf "0x%02x, " $value}}{{- if and $i (mod $i 16) }}{{print "\n"}}{{end}}
         {{- end }}
     }
-    _{{.GoDescriptorIdent.GoName}}_validateOptions = &{{validate "ValidateOptions"}}{}
+    _{{.GoDescriptorIdent.GoName}}_validateOptions = &{{validate "Options"}}{}
+    _{{.GoDescriptorIdent.GoName}}_validateBuilder {{validate "Builder"}}
 )
 
 func init() {
     if err := {{proto "Unmarshal"}}(_{{$file.GoDescriptorIdent.GoName}}_rawValidateOptions, _{{.GoDescriptorIdent.GoName}}_validateOptions); err != nil {
         panic(err)
     }
-}
-
-func _{{.GoDescriptorIdent.GoName}}_getValidateImports() []{{protoreflect "FileDescriptor"}} {
-    imports := []{{protoreflect "FileDescriptor"}}{}
-    for i := 0; i < {{.GoDescriptorIdent.GoName}}.Imports().Len(); i++ {
-        imports = append(imports, {{.GoDescriptorIdent.GoName}}.Imports().Get(i))
-    }
-    return imports
+    _{{.GoDescriptorIdent.GoName}}_validateBuilder = {{validate "NewBuilder"}}(
+        validate.WithDescriptors({{.GoDescriptorIdent.GoName}}),
+        validate.WithOptions(_{{.GoDescriptorIdent.GoName}}_validateOptions),
+    )
 }
 
 {{ range $s := .Services }}
-func New{{.GoName}}ValidateProgram(opts ...{{cel "EnvOption"}}) ({{validate "ServiceValidateProgram"}}, error) {
-    if m, err := {{validate "BuildServiceValidateProgram"}}(
-        _{{$file.GoDescriptorIdent.GoName}}_validateOptions, 
-        {{$file.GoDescriptorIdent.GoName}}.Services().Get({{$s.Desc.Index}}), 
-        {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts}), 
-        _{{$file.GoDescriptorIdent.GoName}}_getValidateImports()...,
-    ); err != nil {
+func New{{.GoName}}ValidateProgram(opts ...{{cel "EnvOption"}}) ({{validate "ServiceRuleValidater"}}, error) {
+    if serviceValidate, err := _{{$file.GoDescriptorIdent.GoName}}_validateBuilder.WithBuildOptions(
+        {{validate "WithEnvOptions"}}({{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})),
+    ).BuildServiceRuleValidater({{$file.GoDescriptorIdent.GoName}}.Services().Get({{$s.Desc.Index}})); err != nil {
         return nil, err
     } else {
-        return m, nil
+        return serviceValidate, nil
     }
 }
 {{- end}}
@@ -49,8 +43,8 @@ func New{{.GoName}}ValidateProgram(opts ...{{cel "EnvOption"}}) ({{validate "Ser
 {{range $messageNo,$m := .Messages}}
 {{if $m.ContainsValidatePrograms}}
 var (
-    _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_validateProgram {{validate "MessageValidateProgram"}} = nil
-	_{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_validateProgramOnce {{sync "Once"}}
+    _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_ruleValidater {{validate "MessageRuleValidater"}} = nil
+	_{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_ruleValidaterOnce {{sync "Once"}}
 )
 
 func (m *{{$m.GoIdent.GoName}}) Validate(ctx {{context "Context"}}, opts ...{{cel "EnvOption"}}) error {
@@ -60,19 +54,16 @@ func (m *{{$m.GoIdent.GoName}}) Validate(ctx {{context "Context"}}, opts ...{{ce
 }
 
 func (m *{{$m.GoIdent.GoName}}) ValidateWithMask(ctx {{context "Context"}}, fm *{{fieldmaskpb "FieldMask"}}, opts ...{{cel "EnvOption"}}) error {
-    _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_validateProgramOnce.Do(func() {
-        m, err := {{validate "BuildMessageValidateProgram"}}(
-            _{{$file.GoDescriptorIdent.GoName}}_validateOptions, 
-            m.ProtoReflect().Descriptor(), 
-            {{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts}), 
-            _{{$file.GoDescriptorIdent.GoName}}_getValidateImports()...,
-        ); 
+    _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_ruleValidaterOnce.Do(func() {
+        rv, err := _{{$file.GoDescriptorIdent.GoName}}_validateBuilder.WithBuildOptions(
+            {{validate "WithEnvOptions"}}({{cel "Lib"}}(&{{options "Library"}}{EnvOpts: opts})),
+        ).BuildMessageRuleValidater(m.ProtoReflect().Descriptor())
         if err == nil {
-            _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_validateProgram = m
+            _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_ruleValidater = rv
         }
     })
-    if  _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_validateProgram != nil {
-        return _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_validateProgram.ValidateWithMask(ctx, m, fm)
+    if  _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_ruleValidater != nil {
+        return _{{$.GoDescriptorIdent.GoName}}_{{$m.GoIdent.GoName}}_ruleValidater.ValidateWithMask(ctx, m, fm)
     }
     return nil
 }

@@ -19,7 +19,7 @@ var (
 	resourceReferenceSupportDisabled = flag.Bool("resource_reference_support_disabled", false, "disable google.protobuf.resource_reference rules generation")
 )
 
-func loadConfig(config string, c *validate.ValidateOptions) error {
+func loadConfig(config string, c *validate.Options) error {
 	if len(config) > 0 {
 		b, err := os.ReadFile(config)
 		if err != nil {
@@ -36,7 +36,7 @@ func main() {
 	protogen.Options{
 		ParamFunc: flag.CommandLine.Set,
 	}.Run(func(gen *protogen.Plugin) error {
-		c := &validate.ValidateOptions{}
+		c := &validate.Options{}
 		if config != nil {
 			if err := loadConfig(*config, c); err != nil {
 				return err
@@ -45,10 +45,10 @@ func main() {
 		flag.Visit(func(f *flag.Flag) {
 			switch f.Name {
 			case "stdlib_overriding_enabled":
-				if c.Options == nil {
-					c.Options = &options.Options{}
+				if c.Rule == nil {
+					c.Rule.Options = &options.Options{}
 				}
-				c.Options.StdlibOverridingEnabled = *stdlibOverridingEnabled
+				c.Rule.Options.StdlibOverridingEnabled = *stdlibOverridingEnabled
 			case "required_support_disabled":
 				c.RequiredSupportDisabled = *requiredSupportDisabled
 			case "resource_reference_support_disabled":
