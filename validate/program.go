@@ -6,7 +6,6 @@ import (
 
 	options "github.com/Neakxs/protocel/options"
 	"github.com/google/cel-go/cel"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
@@ -15,50 +14,59 @@ type Validater interface {
 	ValidateWithMask(ctx context.Context, fm *fieldmaskpb.FieldMask) error
 }
 
-type ValidateProgram interface {
-	CEL() map[string]cel.Program
+type ValidateProgram struct {
+	Id      string
+	Expr    string
+	Program cel.Program
 }
 
-type validateProgram struct {
-	rules map[string]cel.Program
+type RuleValidater interface {
+	Programs() []*ValidateProgram
 }
 
-func (p *validateProgram) CEL() map[string]cel.Program { return p.rules }
+type ruleValidater struct {
+	programs []*ValidateProgram
+}
 
-func BuildValidateProgram(exprs []string, config *ValidateOptions, envOpt cel.EnvOption, imports ...protoreflect.FileDescriptor) (ValidateProgram, error) {
+func (v *ruleValidater) Programs() []*ValidateProgram { return v.programs }
+
+func BuildRuleValidater(rule *Rule, envOpt cel.EnvOption) (RuleValidater, error) {
 	envOpts := []cel.EnvOption{cel.Types(&fieldmaskpb.FieldMask{})}
 	if envOpt != nil {
 		envOpts = append(envOpts, envOpt)
 	}
-	for _, imp := range imports {
-		envOpts = append(envOpts, cel.TypeDescs(imp))
-	}
-	rules := map[string]cel.Program{}
-	for _, expr := range exprs {
-		customEnvOpts := envOpts
-		if config != nil && config.Options != nil {
-			if macros, err := options.BuildMacros(config.Options, expr, customEnvOpts); err != nil {
-				return nil, fmt.Errorf("build macros error: %v", err)
-			} else {
-				customEnvOpts = append(customEnvOpts, cel.Macros(macros...))
+	validater := &ruleValidater{}
+	if rule != nil {
+		for _, rawProgram := range rule.Programs {
+			customEnvOpts := envOpts
+			if rule.Options != nil {
+				if macros, err := options.BuildMacros(rule.Options, rawProgram.Expr, customEnvOpts); err != nil {
+					return nil, fmt.Errorf("build macros error: %v", err)
+				} else {
+					customEnvOpts = append(customEnvOpts, cel.Macros(macros...))
+				}
 			}
+			env, err := cel.NewCustomEnv(customEnvOpts...)
+			if err != nil {
+				return nil, fmt.Errorf("new env error: %w", err)
+			}
+			ast, issues := env.Compile(rawProgram.Expr)
+			if issues != nil && issues.Err() != nil {
+				return nil, fmt.Errorf("compile error: %w", issues.Err())
+			}
+			if !ast.OutputType().IsAssignableType(cel.BoolType) {
+				return nil, fmt.Errorf("output type not bool")
+			}
+			pgr, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
+			if err != nil {
+				return nil, fmt.Errorf("program error: %w", err)
+			}
+			validater.programs = append(validater.programs, &ValidateProgram{
+				Id:      rawProgram.Id,
+				Expr:    rawProgram.Expr,
+				Program: pgr,
+			})
 		}
-		env, err := cel.NewCustomEnv(customEnvOpts...)
-		if err != nil {
-			return nil, fmt.Errorf("new env error: %w", err)
-		}
-		ast, issues := env.Compile(expr)
-		if issues != nil && issues.Err() != nil {
-			return nil, fmt.Errorf("compile error: %w", issues.Err())
-		}
-		if !ast.OutputType().IsAssignableType(cel.BoolType) {
-			return nil, fmt.Errorf("output type not bool")
-		}
-		pgr, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
-		if err != nil {
-			return nil, fmt.Errorf("program error: %w", err)
-		}
-		rules[expr] = pgr
 	}
-	return &validateProgram{rules: rules}, nil
+	return validater, nil
 }

@@ -12,10 +12,14 @@ import (
 var patternRegexp = regexp.MustCompile(`\{[\w-]+\}`)
 var newPattern = `[\\w-\\.]+`
 
-func GenerateResourceTypePatternMapping(imports ...protoreflect.FileDescriptor) map[string]string {
+func GenerateResourceTypePatternMapping(desc protoreflect.Descriptor) map[string]string {
+	imps := []protoreflect.FileDescriptor{desc.ParentFile()}
+	for i := 0; i < desc.ParentFile().Imports().Len(); i++ {
+		imps = append(imps, desc.ParentFile().Imports().Get(i))
+	}
 	m := map[string]string{}
-	for i := 0; i < len(imports); i++ {
-		messages := imports[i].Messages()
+	for i := 0; i < len(imps); i++ {
+		messages := imps[i].Messages()
 		for j := 0; j < messages.Len(); j++ {
 			msg := messages.Get(j)
 			resource := proto.GetExtension(msg.Options(), annotations.E_Resource).(*annotations.ResourceDescriptor)

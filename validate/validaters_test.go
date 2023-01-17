@@ -7,49 +7,35 @@ import (
 	"github.com/Neakxs/protocel/testdata/validate"
 	"github.com/google/cel-go/cel"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-var tests = []struct {
-	Name           string
-	Message        proto.Message
-	Config         *ValidateOptions
-	EnvOpt         cel.EnvOption
-	WantCompileErr bool
-	WantEvalErr    bool
-	WantFalse      bool
-}{
-	{
-		Name:        "NOK (Validater implemented)",
-		Message:     &validate.TestRpcRequest{},
-		WantEvalErr: true,
-	},
-	{
-		Name:        "NOK (Validater not implemented)",
-		Message:     &validate.FieldExpr{Name: "name"},
-		WantEvalErr: true,
-	},
-	{
-		Name:    "OK (Validater not implemented)",
-		Message: &validate.FieldExpr{Name: "notname"},
-	},
-	{
-		Name:    "OK (Validater implemented)",
-		Message: &validate.TestRpcRequest{Ref: "refs/myref", Raw: "raw"},
-	},
-}
-
-func TestValidateFunctionOpt(t *testing.T) {
+func TestDefaultOverloadBuilder(t *testing.T) {
+	tests := []struct {
+		Name           string
+		Message        proto.Message
+		Config         *Options
+		EnvOpt         cel.EnvOption
+		WantCompileErr bool
+		WantEvalErr    bool
+		WantFalse      bool
+	}{
+		{
+			Name:        "NOK",
+			Message:     &validate.TestRpcRequest{},
+			WantEvalErr: true,
+		},
+		{
+			Name:    "OK ",
+			Message: &validate.TestRpcRequest{Ref: "refs/myref", Raw: "raw"},
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			env, err := cel.NewEnv(
-				cel.TypeDescs(tt.Message.ProtoReflect().Descriptor().ParentFile()),
+			opts := (&defaultOverloadBuilder{}).buildOverloads(tt.Message.ProtoReflect().Descriptor())
+			opts = append(opts, cel.TypeDescs(tt.Message.ProtoReflect().Descriptor().ParentFile()),
 				cel.Variable("myvar", cel.ObjectType(string(tt.Message.ProtoReflect().Descriptor().FullName()))),
-				(&validateOverloadBuilder{
-					config: tt.Config,
-					envOpt: tt.EnvOpt,
-				}).buildValidateFunction(tt.Message.ProtoReflect().Descriptor()),
 			)
+			env, err := cel.NewEnv(opts...)
 			if err != nil {
 				t.Error(err)
 			}
@@ -81,24 +67,39 @@ func TestValidateFunctionOpt(t *testing.T) {
 		})
 	}
 }
-
-func TestValidateWithMaskFunctionOpt(t *testing.T) {
+func TestFallbackOverloadBuilder(t *testing.T) {
+	tests := []struct {
+		Name           string
+		Message        proto.Message
+		Config         *Options
+		EnvOpt         cel.EnvOption
+		WantCompileErr bool
+		WantEvalErr    bool
+		WantFalse      bool
+	}{
+		{
+			Name:        "NOK",
+			Message:     &validate.TestRpcRequest{Ref: "r"},
+			WantEvalErr: true,
+		},
+		{
+			Name:    "OK ",
+			Message: &validate.TestRpcRequest{Ref: "refs/myref", Raw: "raw"},
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			env, err := cel.NewEnv(
-				cel.TypeDescs(tt.Message.ProtoReflect().Descriptor().ParentFile()),
-				cel.TypeDescs(fieldmaskpb.File_google_protobuf_field_mask_proto),
+			opts := (&fallbackOverloadBuilder{
+				Builder: NewBuilder(WithDescriptors(tt.Message.ProtoReflect().Descriptor().ParentFile())),
+			}).buildOverloads(tt.Message.ProtoReflect().Descriptor())
+			opts = append(opts, cel.TypeDescs(tt.Message.ProtoReflect().Descriptor().ParentFile()),
 				cel.Variable("myvar", cel.ObjectType(string(tt.Message.ProtoReflect().Descriptor().FullName()))),
-				cel.Variable("fm", cel.ObjectType(string((&fieldmaskpb.FieldMask{}).ProtoReflect().Descriptor().FullName()))),
-				(&validateOverloadBuilder{
-					config: tt.Config,
-					envOpt: tt.EnvOpt,
-				}).buildValidateWithMaskFunction(tt.Message.ProtoReflect().Descriptor()),
 			)
+			env, err := cel.NewEnv(opts...)
 			if err != nil {
 				t.Error(err)
 			}
-			ast, issues := env.Compile(`myvar.validateWithMask(fm)`)
+			ast, issues := env.Compile(`myvar.validate()`)
 			if issues != nil {
 				err = issues.Err()
 			}
@@ -109,7 +110,7 @@ func TestValidateWithMaskFunctionOpt(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			} else {
-				val, _, err := pgr.ContextEval(context.Background(), map[string]interface{}{"myvar": tt.Message, "fm": &fieldmaskpb.FieldMask{Paths: []string{"*"}}})
+				val, _, err := pgr.ContextEval(context.Background(), map[string]interface{}{"myvar": tt.Message})
 				if err == nil {
 					if e, ok := val.Value().(error); ok {
 						err = e
