@@ -11,7 +11,11 @@ message Message {
 
 message MessageExpr {
     option (protocel.validate.message) = {
-        expr: 'name != ""'
+        rule: {
+            programs: {
+                expr: 'name != ""'
+            }
+        }
     };
     string name = 1;
 }
@@ -22,27 +26,39 @@ message MessageNested {
 
 message MessageNestedExpr {
     option (protocel.validate.message) = {
-        expr: 'message_expr.name != ""'
+        rule: {
+            programs: {
+                expr: 'message_expr.name != ""'
+            }
+        }
     };
     MessageExpr message_expr = 1;
 };
 
 message MessageOptions {
     option (protocel.validate.message) = {
-        expr: 'name != emptyName'
+        rule: {
+            programs: {
+                expr: 'name != emptyName'
+            }
+        }
     };
     string name = 1;
 }
 
 message MessageLocalOptions {
     option (protocel.validate.message) = {
-        expr: 'name != emptyName'
-        options: {
-            globals: {
-                constants: [{
-                    key: "emptyName"
-                    value: ""
-                }]
+        rule: {
+            options: {
+                globals: {
+                    constants: [{
+                        key: "emptyName"
+                        value: ""
+                    }]
+                }
+            }
+            programs: {
+                expr: 'name != emptyName'
             }
         }
     };

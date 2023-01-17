@@ -13,8 +13,20 @@ service FieldmaskService {
 
 message FieldmaskRequest {
     message Data {
-        string name = 1 [(protocel.validate.field).expr = 'name.startsWith("names/")'];
+        string name = 1 [(protocel.validate.field) = {
+            rule: {
+                programs: {
+                    expr: 'name.startsWith("names/")'
+                }
+            }
+        }];
     }
-    Data data = 1 [(protocel.validate.field).expr = 'data.validateWithMask(field_mask)'];
+    Data data = 1 [(protocel.validate.field) = {
+        rule: {
+            programs: {
+                expr: 'data.validateWithMask(field_mask)'
+            }
+        }
+    }];
     google.protobuf.FieldMask field_mask = 2;
 }

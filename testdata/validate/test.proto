@@ -22,11 +22,19 @@ message TestRpcRequest {
     ];
     Nested nested = 2;
     google.protobuf.FieldMask fm = 3;
-    string raw = 4  [(protocel.validate.field).expr = 'raw != ""'];
+    string raw = 4  [(protocel.validate.field).rule = {
+        programs: [{
+            expr: 'raw != ""'
+        }]
+    }];
 }
 
 message Nested {
-    string name = 1 [(protocel.validate.field).expr = 'name != ""'];
+    string name = 1 [(protocel.validate.field).rule = {
+        programs: [{
+            expr: 'name != ""'
+        }]
+    }];
     string value = 2;
     RefMultiple ref = 3;
 }

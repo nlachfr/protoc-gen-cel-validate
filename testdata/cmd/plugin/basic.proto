@@ -14,6 +14,12 @@ service BasicService {
 message BasicRequest {
     string name = 1 [
         (google.api.field_behavior) = REQUIRED,
-        (protocel.validate.field).expr = 'name.startsWith("names/")'
+        (protocel.validate.field) = {
+            rule: {
+                programs: {
+                    expr: 'name.startsWith("names/")'
+                }
+            }
+        }
     ];
 }

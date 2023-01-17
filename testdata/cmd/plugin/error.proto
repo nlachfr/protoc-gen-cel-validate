@@ -11,5 +11,11 @@ service ErrorService {
 }
 
 message ErrorRequest {
-    string name = 1 [(protocel.validate.field).expr = 'name.shouldFail()'];
+    string name = 1 [(protocel.validate.field) = {
+        rule: {
+            programs: {
+                expr: 'name.shouldFail()'
+            }
+        }
+    }];
 }
