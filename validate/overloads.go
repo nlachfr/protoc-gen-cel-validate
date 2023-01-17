@@ -93,10 +93,7 @@ func (b *defaultOverloadBuilder) validate(value ref.Val) ref.Val {
 
 func (b *defaultOverloadBuilder) validateWithMask(lhs, rhs ref.Val) ref.Val {
 	var err error
-	fm, ok := rhs.Value().(*fieldmaskpb.FieldMask)
-	if !ok {
-		return types.Bool(false)
-	}
+	fm := rhs.Value().(*fieldmaskpb.FieldMask)
 	if v, ok := lhs.Value().(Validater); ok {
 		err = v.ValidateWithMask(context.TODO(), fm)
 	} else {
@@ -139,10 +136,7 @@ func (b *fallbackOverloadBuilder) validate(value ref.Val) ref.Val {
 }
 
 func (b *fallbackOverloadBuilder) validateWithMask(lhs, rhs ref.Val) ref.Val {
-	fm, ok := rhs.Value().(*fieldmaskpb.FieldMask)
-	if !ok {
-		return types.Bool(false)
-	}
+	fm := rhs.Value().(*fieldmaskpb.FieldMask)
 	msg, ok := lhs.Value().(proto.Message)
 	if ok {
 		desc := msg.ProtoReflect().Descriptor()
