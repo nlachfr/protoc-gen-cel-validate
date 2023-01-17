@@ -62,7 +62,7 @@ func TestBuildServiceRuleValidater(t *testing.T) {
 							},
 						},
 						ServiceRules: map[string]*ServiceRule{
-							string(validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("Service")).FullName()): &ServiceRule{
+							string(validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("Service")).FullName()): {
 								Rule: &Rule{
 									Programs: []*Rule_Program{{Expr: `attribute_context.request.headers[isAdmHdr] == "true"`}},
 								},
@@ -161,9 +161,9 @@ func TestBuildServiceRuleValidater(t *testing.T) {
 							},
 						},
 						ServiceRules: map[string]*ServiceRule{
-							string(validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("Service")).FullName()): &ServiceRule{
+							string(validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("Service")).FullName()): {
 								MethodRules: map[string]*MethodRule{
-									string(validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("Service")).Methods().ByName("Rpc").Name()): &MethodRule{
+									string(validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("Service")).Methods().ByName("Rpc").Name()): {
 										Rule: &Rule{
 											Programs: []*Rule_Program{{Expr: `attribute_context.request.headers["x-is-admin"] == "true"`}},
 										},
