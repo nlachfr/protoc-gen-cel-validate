@@ -165,6 +165,11 @@ func TestBuildServiceRuleValidater(t *testing.T) {
 			},
 			WantErr: false,
 		},
+		{
+			Name:        "Method file config expr",
+			ServiceDesc: validate.File_testdata_validate_file_proto.Services().ByName("File"),
+			WantErr:     false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
@@ -257,6 +262,11 @@ func TestBuildMessageRuleValidater(t *testing.T) {
 				},
 			},
 			WantErr: false,
+		},
+		{
+			Name:        "Message file config expr",
+			MessageDesc: validate.File_testdata_validate_file_proto.Messages().ByName("FileRpc"),
+			WantErr:     false,
 		},
 		{
 			Name:        "Field level expr",

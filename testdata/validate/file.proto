@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package testdata.validate;
+option go_package = "github.com/Neakxs/protocel/testdata/validate";
+
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+option (protocel.validate.file) = {
+    options: {
+        globals: {
+            constants: {
+                key: "my_const"
+                value: "value"
+            }
+        }
+    }
+    service_rules: {
+        key: 'testdata.validate.File'
+        value: {
+            method_rules: {
+                key: 'Rpc'
+                value: {
+                    rule: {
+                        programs: {
+                            expr: 'request.body == my_const'
+                        }
+                    }
+                }
+            }
+        }
+    }
+    message_rules: {
+        key: 'testdata.validate.FileRpc'
+        value: {
+            rule: {
+                programs: {
+                    expr: 'body == my_const'
+                }
+            }
+        }
+    }
+};
+
+service File {
+    rpc Rpc(FileRpc) returns (google.protobuf.Empty) {};
+}
+
+message FileRpc {
+    string body = 1;
+}
