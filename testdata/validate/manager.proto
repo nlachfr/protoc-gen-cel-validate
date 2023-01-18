@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package testdata.validate;
+option go_package = "github.com/Neakxs/protocel/testdata/validate";
+
+import "google/protobuf/empty.proto";
+import "validate/validate.proto";
+
+service Manager {
+    rpc ManagerRpc(ManagerRpcRequest) returns (google.protobuf.Empty) {
+        option (protocel.validate.method) = {
+            rule: {
+                programs: {
+                    expr: 'request.name == name_const'
+                }
+            }
+        };
+    };
+}
+
+message ManagerRpcRequest {
+    option (protocel.validate.message) = {
+        rule : {
+            programs: {
+                expr: 'name == name_var'
+            }
+        }
+    };
+    string name = 1;
+}

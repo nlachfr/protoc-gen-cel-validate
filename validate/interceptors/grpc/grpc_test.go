@@ -119,7 +119,11 @@ func TestNewGRPCUnaryInterceptor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			validater, err := validate.NewBuilder(validate.WithDescriptors(tt.Desc)).BuildServiceRuleValidater(tt.Desc.Parent().(protoreflect.ServiceDescriptor))
+			manager, err := validate.NewManager(tt.Desc.ParentFile())
+			if err != nil {
+				t.Error(err)
+			}
+			validater, err := manager.GetServiceRuleValidater(tt.Desc.Parent().(protoreflect.ServiceDescriptor))
 			if err != nil {
 				t.Error(err)
 			}

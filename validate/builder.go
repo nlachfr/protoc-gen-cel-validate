@@ -11,121 +11,14 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func WithFallbackOverloads() BuildOption {
-	return buildOption(func(b *builder) *builder {
-		return &builder{
-			ob:     &fallbackOverloadBuilder{b},
-			opts:   b.opts,
-			envOpt: b.envOpt,
-		}
-	})
-}
-
-func WithDescriptors(descs ...protoreflect.Descriptor) BuildOption {
-	return buildOption(func(b *builder) *builder {
-		lib := &options.Library{}
-		for _, desc := range descs {
-			fileDesc := desc.ParentFile()
-			lib.EnvOpts = append(lib.EnvOpts, cel.TypeDescs(fileDesc))
-			for i := 0; i < fileDesc.Imports().Len(); i++ {
-				lib.EnvOpts = append(lib.EnvOpts, cel.TypeDescs(fileDesc.Imports().Get(i)))
-			}
-		}
-		if b.envOpt != nil {
-			lib.EnvOpts = append(lib.EnvOpts, b.envOpt)
-		}
-		newBuilder := &builder{
-			ob:     b.ob,
-			opts:   b.opts,
-			envOpt: cel.Lib(lib),
-		}
-		if _, ok := b.ob.(*fallbackOverloadBuilder); ok {
-			newBuilder.ob = &fallbackOverloadBuilder{newBuilder}
-		}
-		return newBuilder
-	})
-}
-
-func WithEnvOptions(envOpts ...cel.EnvOption) BuildOption {
-	return buildOption(func(b *builder) *builder {
-		lib := &options.Library{}
-		for _, envOpt := range envOpts {
-			if envOpt != nil {
-				lib.EnvOpts = append(lib.EnvOpts, envOpt)
-			}
-		}
-		if b.envOpt != nil {
-			lib.EnvOpts = append(lib.EnvOpts, b.envOpt)
-		}
-		newBuilder := &builder{
-			ob:     b.ob,
-			opts:   b.opts,
-			envOpt: cel.Lib(lib),
-		}
-		if _, ok := b.ob.(*fallbackOverloadBuilder); ok {
-			newBuilder.ob = &fallbackOverloadBuilder{newBuilder}
-		}
-		return newBuilder
-	})
-}
-
-func WithOptions(optsList ...*Options) BuildOption {
-	return buildOption(func(b *builder) *builder {
-		opts := &Options{}
-		if b.opts != nil {
-			opts = proto.Clone(b.opts).(*Options)
-		}
-		for _, o := range optsList {
-			if o != nil {
-				proto.Merge(opts, o)
-			}
-		}
-		newBuilder := &builder{
-			ob:     b.ob,
-			opts:   opts,
-			envOpt: b.envOpt,
-		}
-		if _, ok := b.ob.(*fallbackOverloadBuilder); ok {
-			newBuilder.ob = &fallbackOverloadBuilder{newBuilder}
-		}
-		return newBuilder
-	})
-}
-
-type BuildOption interface {
-	apply(b *builder) *builder
-}
-
-type buildOption func(b *builder) *builder
-
-func (opt buildOption) apply(b *builder) *builder { return opt(b) }
-
-type Builder interface {
-	WithBuildOptions(opts ...BuildOption) Builder
-	BuildServiceRuleValidater(desc protoreflect.ServiceDescriptor) (ServiceRuleValidater, error)
-	BuildMessageRuleValidater(desc protoreflect.MessageDescriptor) (MessageRuleValidater, error)
-}
-
 type builder struct {
 	ob     overloadBuilder
 	opts   *Options
 	envOpt cel.EnvOption
 }
 
-func NewBuilder(opts ...BuildOption) *builder {
-	b := &builder{ob: &defaultOverloadBuilder{}}
-	for _, opt := range opts {
-		b = opt.apply(b)
-	}
-	return b
-}
-
-func (b *builder) WithBuildOptions(opts ...BuildOption) Builder {
-	nb := b
-	for _, opt := range opts {
-		nb = opt.apply(b)
-	}
-	return nb
+func newBuilder() *builder {
+	return &builder{ob: &defaultOverloadBuilder{}}
 }
 
 func (b *builder) BuildServiceRuleValidater(desc protoreflect.ServiceDescriptor) (ServiceRuleValidater, error) {
@@ -223,6 +116,9 @@ func (b *builder) buildMethodRuleValidater(serviceRule *ServiceRule, desc protor
 	if envOpt != nil {
 		lib.EnvOpts = append(lib.EnvOpts, envOpt)
 	}
+	for i := 0; i < desc.Input().ParentFile().Imports().Len(); i++ {
+		lib.EnvOpts = append(lib.EnvOpts, cel.TypeDescs(desc.Input().ParentFile().Imports().Get(i)))
+	}
 	lib.EnvOpts = append(lib.EnvOpts,
 		cel.TypeDescs(desc.Input().ParentFile()),
 		cel.Variable("request", cel.ObjectType(string(desc.Input().FullName()))),
@@ -265,9 +161,12 @@ func (b *builder) BuildMessageRuleValidater(desc protoreflect.MessageDescriptor)
 	if messageRule.Rule != nil {
 		proto.Merge(rule, messageRule.Rule)
 	}
-	lib := &options.Library{}
+	lib := &options.Library{EnvOpts: []cel.EnvOption{cel.TypeDescs(desc.ParentFile())}}
 	if b.envOpt != nil {
 		lib.EnvOpts = append(lib.EnvOpts, b.envOpt)
+	}
+	for i := 0; i < desc.ParentFile().Imports().Len(); i++ {
+		lib.EnvOpts = append(lib.EnvOpts, cel.TypeDescs(desc.ParentFile().Imports().Get(i)))
 	}
 	lib.EnvOpts = append(lib.EnvOpts, cel.DeclareContextProto(desc))
 	lib.EnvOpts = append(lib.EnvOpts, b.ob.buildOverloads(desc)...)

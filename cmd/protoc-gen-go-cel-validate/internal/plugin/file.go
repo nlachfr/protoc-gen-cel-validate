@@ -11,17 +11,17 @@ func NewFile(p *protogen.Plugin, f *protogen.File, c *validate.Options) (*File, 
 	g := p.NewGeneratedFile(f.GeneratedFilenamePrefix+".pb.cel.validate.go", f.GoImportPath)
 	cfg := &validate.Options{}
 	proto.Merge(cfg, c)
-	builder := validate.NewBuilder(
-		validate.WithOptions(cfg),
-		validate.WithDescriptors(f.Desc),
-	)
+	manager, err := validate.NewManager(f.Desc, validate.WithOptions(cfg))
+	if err != nil {
+		return nil, err
+	}
 	svcs := []*Service{}
 	for i := 0; i < len(f.Services); i++ {
-		svcs = append(svcs, NewService(builder, f.Services[i]))
+		svcs = append(svcs, NewService(manager, f.Services[i]))
 	}
 	msgs := []*Message{}
 	for i := 0; i < len(f.Messages); i++ {
-		msgs = append(msgs, NewMessage(builder, f.Messages[i]))
+		msgs = append(msgs, NewMessage(manager, f.Messages[i]))
 	}
 	return &File{
 		p:        p,
@@ -67,45 +67,45 @@ func (f *File) Validate() error {
 	return nil
 }
 
-func NewService(b validate.Builder, s *protogen.Service) *Service {
+func NewService(b *validate.Manager, s *protogen.Service) *Service {
 	return &Service{
 		Service: s,
-		Builder: b,
+		Manager: b,
 	}
 }
 
 type Service struct {
 	*protogen.Service
-	Builder validate.Builder
+	Manager *validate.Manager
 }
 
 func (s *Service) Validate() error {
-	if _, err := s.Builder.BuildServiceRuleValidater(s.Desc); err != nil {
+	if _, err := s.Manager.GetServiceRuleValidater(s.Desc); err != nil {
 		return err
 	}
 	return nil
 }
 
-func NewMessage(b validate.Builder, m *protogen.Message) *Message {
+func NewMessage(b *validate.Manager, m *protogen.Message) *Message {
 	return &Message{
 		Message: m,
-		Builder: b,
+		Manager: b,
 	}
 }
 
 type Message struct {
 	*protogen.Message
-	Builder validate.Builder
+	Manager *validate.Manager
 }
 
 func (m *Message) Validate() error {
-	if _, err := m.Builder.BuildMessageRuleValidater(m.Desc); err != nil {
+	if _, err := m.Manager.GetMessageRuleValidater(m.Desc); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *Message) ContainsValidatePrograms() bool {
-	v, _ := m.Builder.BuildMessageRuleValidater(m.Desc)
+	v, _ := m.Manager.GetMessageRuleValidater(m.Desc)
 	return v.HasValidaters()
 }

@@ -109,7 +109,7 @@ func (b *defaultOverloadBuilder) validateWithMask(lhs, rhs ref.Val) ref.Val {
 }
 
 type fallbackOverloadBuilder struct {
-	Builder Builder
+	Builder *builder
 }
 
 func (b *fallbackOverloadBuilder) buildOverloads(desc protoreflect.MessageDescriptor) []cel.EnvOption {

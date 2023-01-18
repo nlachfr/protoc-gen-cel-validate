@@ -95,7 +95,7 @@ func TestFallbackOverloadBuilder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			opts := (&fallbackOverloadBuilder{
-				Builder: NewBuilder(WithDescriptors(tt.Message.ProtoReflect().Descriptor().ParentFile())),
+				Builder: newBuilder(),
 			}).buildOverloads(tt.Message.ProtoReflect().Descriptor())
 			opts = append(opts, cel.TypeDescs(tt.Message.ProtoReflect().Descriptor().ParentFile()),
 				cel.TypeDescs(fieldmaskpb.File_google_protobuf_field_mask_proto),
