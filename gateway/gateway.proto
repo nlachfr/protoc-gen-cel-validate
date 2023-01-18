@@ -19,5 +19,5 @@ message Configuration {
     Serve serve = 1;
     map<string,Upstream> upstreams = 2;
     Files files = 3;
-    protocel.validate.ValidateOptions validate = 10;
+    protocel.validate.Options validate = 10;
 }
