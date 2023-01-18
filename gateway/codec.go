@@ -33,6 +33,9 @@ type protoBinaryCodec struct {
 func (c *protoBinaryCodec) Name() string { return "proto" }
 
 func (c *protoBinaryCodec) Marshal(message any) ([]byte, error) {
+	if msg, ok := message.(*dynamicpb.Message); ok && msg == nil {
+		return nil, nil
+	}
 	protoMessage, ok := message.(proto.Message)
 	if !ok {
 		return nil, fmt.Errorf("%T doesn't implement proto.Message", message)
@@ -60,26 +63,27 @@ type protoJSONCodec struct {
 func (c *protoJSONCodec) Name() string { return "json" }
 
 func (c *protoJSONCodec) Marshal(message any) ([]byte, error) {
+	if msg, ok := message.(*dynamicpb.Message); ok && msg == nil {
+		return nil, nil
+	}
 	protoMessage, ok := message.(proto.Message)
 	if !ok {
 		return nil, fmt.Errorf("%T doesn't implement proto.Message", message)
 	}
-	var options protojson.MarshalOptions
-	return options.Marshal(protoMessage)
+	return protojson.Marshal(protoMessage)
 }
 
 func (c *protoJSONCodec) Unmarshal(binary []byte, message any) error {
-	var options protojson.UnmarshalOptions
 	if msg, ok := message.(**dynamicpb.Message); ok {
 		new := dynamicpb.NewMessage(c.desc)
 		*msg = new
-		return options.Unmarshal(binary, *msg)
+		return protojson.Unmarshal(binary, *msg)
 	}
 	protoMessage, ok := message.(proto.Message)
 	if !ok {
 		return fmt.Errorf("%T doesn't implement proto.Message", message)
 	}
-	return options.Unmarshal(binary, protoMessage)
+	return protojson.Unmarshal(binary, protoMessage)
 }
 
 type protoJSONUTF8Codec struct{ protoJSONCodec }

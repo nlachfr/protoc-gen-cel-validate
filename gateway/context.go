@@ -25,11 +25,13 @@ func BuildAttributeContext(s connect.Spec, p connect.Peer, h http.Header) *attri
 	}
 	attr := &attribute_context.AttributeContext{
 		Api: &attribute_context.AttributeContext_Api{
-			Operation: s.Procedure,
+			Operation: strings.ReplaceAll(strings.TrimPrefix(s.Procedure, "/"), "/", "."),
 		},
-		Origin:  peer,
-		Source:  peer,
-		Request: &attribute_context.AttributeContext_Request{},
+		Origin: peer,
+		Source: peer,
+		Request: &attribute_context.AttributeContext_Request{
+			Headers: map[string]string{},
+		},
 	}
 	switch p.Protocol {
 	case connect.ProtocolConnect:
@@ -38,7 +40,7 @@ func BuildAttributeContext(s connect.Spec, p connect.Peer, h http.Header) *attri
 		attr.Api.Protocol = "grpc"
 	}
 	for k, v := range h {
-		attr.Request.Headers[k] = strings.Join(v, ",")
+		attr.Request.Headers[strings.ToLower(k)] = strings.Join(v, ",")
 	}
 	return attr
 }
