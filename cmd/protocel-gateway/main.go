@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	config = flag.String("config", "", "global configuration file")
+	config = flag.String("config", "config.yml", "global configuration file")
 )
 
 func loadConfig(config string, c *gateway.Configuration) error {
@@ -72,12 +72,12 @@ func main() {
 	wg := sync.WaitGroup{}
 	for _, l := range listeners {
 		wg.Add(1)
-		go func() {
+		go func(l net.Listener) {
 			if err := http.Serve(l, handler); err != nil {
 				log.Fatal(err)
 			}
 			wg.Done()
-		}()
+		}(l)
 	}
 	wg.Wait()
 }
