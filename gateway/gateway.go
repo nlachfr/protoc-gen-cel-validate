@@ -3,7 +3,9 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"sync"
 
@@ -54,6 +56,9 @@ func NewGateway(ctx context.Context, config *Configuration) (http.Handler, error
 	} else if files, err := CompileFiles(ctx, config.Files); err != nil {
 		return nil, err
 	} else {
+		if config.Upstreams == nil {
+			config.Upstreams = map[string]*Configuration_Upstream{}
+		}
 		handlerChan := make(chan struct {
 			rpc     string
 			handler http.Handler
@@ -69,21 +74,44 @@ func NewGateway(ctx context.Context, config *Configuration) (http.Handler, error
 			}
 			for i := 0; i < file.Services().Len(); i++ {
 				sd := file.Services().Get(i)
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					svr, err := manager.GetServiceRuleValidater(sd)
+				if upstreamConfig, ok := config.Upstreams[string(sd.FullName())]; ok && upstreamConfig.Address != "" {
+					httpTransport := &http.Transport{
+						ForceAttemptHTTP2: true,
+					}
+					_, err := url.Parse(upstreamConfig.Address)
 					if err != nil {
-						errChan <- err
+						return nil, err
 					}
-					rpc, handler := NewServiceHandler("http://127.0.0.1:6789", http.DefaultClient, svr, sd)
-					handlerChan <- struct {
-						rpc     string
-						handler http.Handler
-					}{
-						rpc: rpc, handler: handler,
+					if upstreamConfig.Server != "" {
+						srvUrl, err := url.Parse(upstreamConfig.Server)
+						if err != nil {
+							return nil, err
+						}
+						httpTransport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+							return net.DefaultResolver.Dial(ctx, srvUrl.Scheme, srvUrl.Host)
+						}
 					}
-				}()
+					httpClient := &http.Client{
+						Transport: httpTransport,
+					}
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						svr, err := manager.GetServiceRuleValidater(sd)
+						if err != nil {
+							errChan <- err
+						}
+						rpc, handler := NewServiceHandler(upstreamConfig.Address, httpClient, svr, sd)
+						handlerChan <- struct {
+							rpc     string
+							handler http.Handler
+						}{
+							rpc: rpc, handler: handler,
+						}
+					}()
+				} else {
+					fmt.Printf("Found no matching upstream for service: %s\n", sd.FullName())
+				}
 			}
 		}
 		go func() {
