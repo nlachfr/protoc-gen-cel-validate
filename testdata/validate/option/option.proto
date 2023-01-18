@@ -9,16 +9,20 @@ import "validate/validate.proto";
 service OptionService {
     rpc Option(OptionRequest) returns (google.protobuf.Empty) {
         option (protocel.validate.method) = {
-            exprs: ['request.name == myMethodConst']
-            options: {
-                globals: {
-                    constants: [
-                        {
-                            key: 'myMethodConst'
-                            value: "name"
-                        }
-                    ]
+            rule: {
+                options: {
+                    globals: {
+                        constants: [
+                            {
+                                key: 'myMethodConst'
+                                value: "name"
+                            }
+                        ]
+                    }
                 }
+                programs: {
+                    expr: 'request.name == myMethodConst'
+                }                
             }
         };
     }
@@ -38,6 +42,10 @@ message OptionRequest {
         }
     };
     string name = 1 [(protocel.validate.field) = {
-        exprs: ['name == myMessageConst']
+        rule: {
+            programs: {
+                expr: 'name == myMessageConst'
+            }
+        }
     }]; 
 }

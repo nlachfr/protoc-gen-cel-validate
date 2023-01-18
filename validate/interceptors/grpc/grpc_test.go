@@ -119,11 +119,15 @@ func TestNewGRPCUnaryInterceptor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			pgr, err := validate.BuildServiceValidateProgram(nil, tt.Desc.Parent().(protoreflect.ServiceDescriptor), nil, tt.Desc.ParentFile())
+			manager, err := validate.NewManager(tt.Desc.ParentFile())
 			if err != nil {
 				t.Error(err)
 			}
-			if _, err = NewGRPCUnaryInterceptor(pgr, nil)(tt.Context, tt.Request, tt.Info, func(ctx context.Context, req interface{}) (interface{}, error) { return nil, nil }); (err != nil && !tt.WantErr) || (err == nil && tt.WantErr) {
+			validater, err := manager.GetServiceRuleValidater(tt.Desc.Parent().(protoreflect.ServiceDescriptor))
+			if err != nil {
+				t.Error(err)
+			}
+			if _, err = NewGRPCUnaryInterceptor(validater, nil)(tt.Context, tt.Request, tt.Info, func(ctx context.Context, req interface{}) (interface{}, error) { return nil, nil }); (err != nil && !tt.WantErr) || (err == nil && tt.WantErr) {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 			}
 		})

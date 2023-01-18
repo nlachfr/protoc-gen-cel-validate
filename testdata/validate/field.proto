@@ -17,24 +17,24 @@ message Field {
 }
 
 message FieldExpr {
-    string name = 1 [
-        (protocel.validate.field) = {
+    string name = 1 [(protocel.validate.field).rule = {
+        programs: {
             expr: 'name != "name"'
         }
-    ];
+    }];
 }
 
 message FieldsExpr {
-    string name = 1 [
-        (protocel.validate.field) = {
+    string name = 1 [(protocel.validate.field).rule = {
+        programs: {
             expr: 'name != "name"'
         }
-    ];
-    string display_name = 2 [
-        (protocel.validate.field) = {
+    }];
+    string display_name = 2 [(protocel.validate.field).rule = {
+        programs: {
             expr: 'display_name != name'
         }
-    ];
+    }];
 }
 
 message FieldRequired {
@@ -75,25 +75,25 @@ message FieldRepeatedReferenceType {
 }
 
 message FieldOptions {
-    string name = 1 [
-        (protocel.validate.field) = {
+    string name = 1 [(protocel.validate.field).rule = {
+        programs: {
             expr: 'name != emptyName'
         }
-    ];
+    }];
 }
 
 message FieldLocalOptions {
-    string name = 1 [
-        (protocel.validate.field) = {
-            expr: 'name != ""'
-            options: {
-                globals: {
-                    constants: [{
-                        key: "emptyName"
-                        value: ""
-                    }]
-                }
+    string name = 1 [(protocel.validate.field).rule = {
+        options: {
+            globals: {
+                constants: [{
+                    key: "emptyName"
+                    value: ""
+                }]
             }
         }
-    ];
+        programs: {
+            expr: 'name != ""'
+        }
+    }];
 }

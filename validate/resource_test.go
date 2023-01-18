@@ -9,7 +9,7 @@ import (
 )
 
 func TestGenerateResourceTypePatternMapping(t *testing.T) {
-	mapping := GenerateResourceTypePatternMapping(validate.File_testdata_validate_test_proto, validate.File_testdata_validate_ref_proto)
+	mapping := GenerateResourceTypePatternMapping(validate.File_testdata_validate_test_proto)
 	regexpMapping := map[string]*regexp.Regexp{}
 	for k, v := range mapping {
 		r, err := regexp.Compile(strings.ReplaceAll(v, `\\`, `\`))

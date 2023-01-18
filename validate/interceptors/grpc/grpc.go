@@ -15,11 +15,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func NewGRPCUnaryInterceptor(validateHandler validate.ServiceValidateProgram, errorHandler func(err error) error) grpc.UnaryServerInterceptor {
+func NewGRPCUnaryInterceptor(validater validate.ServiceRuleValidater, errorHandler func(err error) error) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		attr := &attribute_context.AttributeContext{
 			Api: &attribute_context.AttributeContext_Api{
-				Operation: info.FullMethod,
+				Operation: strings.ReplaceAll(strings.TrimPrefix(info.FullMethod, "/"), "/", "."),
 				Protocol:  "grpc",
 			},
 		}
@@ -49,7 +49,7 @@ func NewGRPCUnaryInterceptor(validateHandler validate.ServiceValidateProgram, er
 			attr.Origin = pr
 			attr.Source = pr
 		}
-		if err := validateHandler.Validate(ctx, attr, req.(proto.Message)); err != nil {
+		if err := validater.Validate(ctx, attr, req.(proto.Message)); err != nil {
 			if errorHandler != nil {
 				return nil, errorHandler(err)
 			}

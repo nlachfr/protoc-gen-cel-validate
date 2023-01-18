@@ -9,39 +9,41 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func TestBuildValidateProgram(t *testing.T) {
+func TestBuildRuleValidater(t *testing.T) {
 	tests := []struct {
 		Name      string
-		Exprs     []string
-		Config    *ValidateOptions
+		Rule      *Rule
 		Desc      protoreflect.MessageDescriptor
 		EnvOption cel.EnvOption
-		Imports   []protoreflect.FileDescriptor
 		WantErr   bool
 	}{
 		{
-			Name:    "Unknown field",
-			Exprs:   []string{`name`},
+			Name: "Unknown field",
+			Rule: &Rule{
+				Programs: []*Rule_Program{{Expr: `name`}},
+			},
 			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
 			WantErr: true,
 		},
 		{
-			Name:    "Invalid return type",
-			Exprs:   []string{`"name""`},
+			Name: "Invalid return type",
+			Rule: &Rule{
+				Programs: []*Rule_Program{{Expr: `name`}},
+			},
 			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
 			WantErr: true,
 		},
 		{
-			Name:    "Invalid validate call on standard type",
-			Exprs:   []string{`ref.validate()`},
+			Name: "Invalid validate call on standard type",
+			Rule: &Rule{
+				Programs: []*Rule_Program{{Expr: `ref.validate()`}},
+			},
 			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
 			WantErr: true,
 		},
 		{
-			Name:  "Unknown field in macro",
-			Exprs: []string{`macro()`},
-			Desc:  (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
-			Config: &ValidateOptions{
+			Name: "Unknown field in macro",
+			Rule: &Rule{
 				Options: &options.Options{
 					Globals: &options.Options_Globals{
 						Functions: map[string]string{
@@ -49,14 +51,14 @@ func TestBuildValidateProgram(t *testing.T) {
 						},
 					},
 				},
+				Programs: []*Rule_Program{{Expr: `macro()`}},
 			},
+			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
 			WantErr: true,
 		},
 		{
-			Name:  "Regexp error",
-			Exprs: []string{`ref.matches("[")`},
-			Desc:  (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
-			Config: &ValidateOptions{
+			Name: "Regexp error",
+			Rule: &Rule{
 				Options: &options.Options{
 					Overloads: &options.Options_Overloads{
 						Variables: map[string]*options.Options_Overloads_Type{
@@ -66,21 +68,22 @@ func TestBuildValidateProgram(t *testing.T) {
 						},
 					},
 				},
+				Programs: []*Rule_Program{{Expr: `ref.matches("[")`}},
 			},
+			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
 			WantErr: true,
 		},
 		{
-			Name:    "OK",
-			Exprs:   []string{`ref == "ref"`},
+			Name: "OK",
+			Rule: &Rule{
+				Programs: []*Rule_Program{{Expr: `ref == "ref"`}},
+			},
 			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
-			Config:  nil,
 			WantErr: false,
 		},
 		{
-			Name:  "OK (with constant)",
-			Exprs: []string{`ref == constRef`},
-			Desc:  (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
-			Config: &ValidateOptions{
+			Name: "OK (with constant)",
+			Rule: &Rule{
 				Options: &options.Options{
 					Globals: &options.Options_Globals{
 						Constants: map[string]string{
@@ -88,14 +91,14 @@ func TestBuildValidateProgram(t *testing.T) {
 						},
 					},
 				},
+				Programs: []*Rule_Program{{Expr: `ref == constRef`}},
 			},
+			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
 			WantErr: false,
 		},
 		{
-			Name:  "OK (with macro)",
-			Exprs: []string{`rule() == ref`},
-			Desc:  (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
-			Config: &ValidateOptions{
+			Name: "OK (with macro)",
+			Rule: &Rule{
 				Options: &options.Options{
 					Globals: &options.Options_Globals{
 						Functions: map[string]string{
@@ -103,14 +106,14 @@ func TestBuildValidateProgram(t *testing.T) {
 						},
 					},
 				},
+				Programs: []*Rule_Program{{Expr: `rule() == ref`}},
 			},
+			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
 			WantErr: false,
 		},
 		{
-			Name:  "OK (with variable)",
-			Exprs: []string{`ref == myVariable`},
-			Desc:  (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
-			Config: &ValidateOptions{
+			Name: "OK (with variable)",
+			Rule: &Rule{
 				Options: &options.Options{
 					Overloads: &options.Options_Overloads{
 						Variables: map[string]*options.Options_Overloads_Type{
@@ -120,24 +123,12 @@ func TestBuildValidateProgram(t *testing.T) {
 						},
 					},
 				},
+				Programs: []*Rule_Program{{Expr: `ref == myVariable`}},
 			},
+			Desc: (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
 			EnvOption: cel.Lib(&options.Library{
 				PgrOpts: []cel.ProgramOption{cel.Globals(map[string]interface{}{"myVariable": "ref"})},
 			}),
-			WantErr: false,
-		},
-		{
-			Name:    "OK (validate nested)",
-			Exprs:   []string{`nested.validate()`},
-			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
-			Config:  nil,
-			WantErr: false,
-		},
-		{
-			Name:    "OK (validateWithMask nested)",
-			Exprs:   []string{`nested.validateWithMask(fm)`},
-			Desc:    (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
-			Config:  nil,
 			WantErr: false,
 		},
 	}
@@ -148,13 +139,10 @@ func TestBuildValidateProgram(t *testing.T) {
 				lib.EnvOpts = append(lib.EnvOpts, tt.EnvOption)
 			}
 			lib.EnvOpts = append(lib.EnvOpts, cel.DeclareContextProto(tt.Desc))
-			lib.EnvOpts = append(lib.EnvOpts, buildValidatersFunctions(tt.Config, tt.Desc, tt.EnvOption)...)
-			if tt.Config == nil {
-				lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(nil, tt.Desc))
-			} else {
-				lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(tt.Config.Options, tt.Desc))
+			if tt.Rule != nil {
+				lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(tt.Rule.Options, tt.Desc))
 			}
-			_, err := BuildValidateProgram(tt.Exprs, tt.Config, cel.Lib(lib), tt.Imports...)
+			_, err := BuildRuleValidater(tt.Rule, cel.Lib(lib))
 			if (tt.WantErr && err == nil) || (!tt.WantErr && err != nil) {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 			}

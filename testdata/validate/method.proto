@@ -9,7 +9,11 @@ import "validate/validate.proto";
 service MethodExpr {
     rpc Rpc(google.protobuf.Empty) returns (google.protobuf.Empty) {
         option (protocel.validate.method) = {
-            expr: 'attribute_context.request.headers["x-is-admin"] == "true"'
+            rule: {
+                programs: {
+                    expr: 'attribute_context.request.headers["x-is-admin"] == "true"'
+                }
+            }
         };
     };
 }
@@ -17,7 +21,11 @@ service MethodExpr {
 service MethodOptions {
     rpc Rpc(google.protobuf.Empty) returns (google.protobuf.Empty) {
         option (protocel.validate.method) = {
-            expr: 'attribute_context.request.headers[isAdmHdr] == "true"'
+            rule: {
+                programs: {
+                    expr: 'attribute_context.request.headers[isAdmHdr] == "true"'
+                }
+            }
         };
     };
 }
@@ -25,13 +33,17 @@ service MethodOptions {
 service MethodLocalOptions {
     rpc Rpc(google.protobuf.Empty) returns (google.protobuf.Empty) {
         option (protocel.validate.method) = {
-            expr: 'attribute_context.request.headers[isAdmHdr] == "true"'
-            options: {
-                globals: {
-                    constants: [{
-                        key: "isAdmHdr"
-                        value: "x-is-admin"
-                    }]
+            rule: {
+                options: {
+                    globals: {
+                        constants: [{
+                            key: "isAdmHdr"
+                            value: "x-is-admin"
+                        }]
+                    }
+                }
+                programs: {
+                    expr: 'attribute_context.request.headers[isAdmHdr] == "true"'
                 }
             }
         };

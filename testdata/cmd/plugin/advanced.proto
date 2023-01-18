@@ -26,5 +26,11 @@ service AdvancedService {
 }
 
 message AdvancedRequest {
-    string name = 1 [(protocel.validate.field).expr = 'name == getName() || name == nameConst'];
+    string name = 1 [(protocel.validate.field) = {
+        rule: {
+            programs: {
+                expr: 'name == getName() || name == nameConst'
+            }
+        }
+    }];
 }

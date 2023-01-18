@@ -12,34 +12,50 @@ service Service {
 
 service ServiceExpr {
     option (protocel.validate.service) = {
-        expr: 'attribute_context.request.headers["x-is-admin"] == "true"'
+        rule: {
+            programs: {
+                expr: 'attribute_context.request.headers["x-is-admin"] == "true"'
+            }
+        }
     };
     rpc Rpc(google.protobuf.Empty) returns (google.protobuf.Empty) {};
 }
 
 service ServicePeerExpr {
     option (protocel.validate.service) = {
-        expr: 'attribute_context.origin.ip == "127.0.0.1"'
+        rule: {
+            programs: {
+                expr: 'attribute_context.origin.ip == "127.0.0.1"'
+            }
+        }
     };
     rpc Rpc(google.protobuf.Empty) returns (google.protobuf.Empty) {};
 }
 
 service ServiceOptions {
     option (protocel.validate.service) = {
-        expr: 'attribute_context.request.headers[isAdmHdr] == "true"'
+        rule: {
+            programs: {
+                expr: 'attribute_context.request.headers[isAdmHdr] == "true"'
+            }
+        }
     };
     rpc Rpc(google.protobuf.Empty) returns (google.protobuf.Empty) {};
 }
 
 service ServiceLocalOptions {
     option (protocel.validate.service) = {
-        expr: 'attribute_context.request.headers[isAdmHdr] == "true"'
-        options: {
-            globals: {
-                constants: [{
-                    key: "isAdmHdr"
-                    value: "x-is-admin"
-                }]
+        rule: {
+            options: {
+                globals: {
+                    constants: [{
+                        key: "isAdmHdr"
+                        value: "x-is-admin"
+                    }]
+                }
+            }
+            programs: {
+                expr: 'attribute_context.request.headers[isAdmHdr] == "true"'
             }
         }
     };
