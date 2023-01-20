@@ -10,82 +10,57 @@ import (
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
-func buildClientCodecs(desc protoreflect.MessageDescriptor) []connect.ClientOption {
-	return []connect.ClientOption{
-		connect.WithCodec(&protoBinaryCodec{desc: desc}),
-		connect.WithCodec(&protoJSONCodec{desc: desc}),
-		connect.WithCodec(&protoJSONUTF8Codec{protoJSONCodec{desc: desc}}),
-	}
+func newCodecs(desc protoreflect.MessageDescriptor) connect.Option {
+	return connect.WithOptions(
+		connect.WithCodec(&dynamicpbCodec{
+			name:      "proto",
+			marshal:   proto.Marshal,
+			unmarshal: proto.Unmarshal,
+			desc:      desc,
+		}),
+		connect.WithCodec(&dynamicpbCodec{
+			name:      "json",
+			marshal:   protojson.Marshal,
+			unmarshal: protojson.Unmarshal,
+			desc:      desc,
+		}),
+		connect.WithCodec(&dynamicpbCodec{
+			name:      "json; charset=utf-8",
+			marshal:   protojson.Marshal,
+			unmarshal: protojson.Unmarshal,
+			desc:      desc,
+		}),
+	)
 }
 
-func buildHandlerCodecs(desc protoreflect.MessageDescriptor) []connect.HandlerOption {
-	return []connect.HandlerOption{
-		connect.WithCodec(&protoBinaryCodec{desc: desc}),
-		connect.WithCodec(&protoJSONCodec{desc: desc}),
-		connect.WithCodec(&protoJSONUTF8Codec{protoJSONCodec{desc: desc}}),
-	}
-}
+type dynamicpbCodec struct {
+	name      string
+	marshal   func(proto.Message) ([]byte, error)
+	unmarshal func([]byte, proto.Message) error
 
-type protoBinaryCodec struct {
 	desc protoreflect.MessageDescriptor
 }
 
-func (c *protoBinaryCodec) Name() string { return "proto" }
+func (c *dynamicpbCodec) Name() string { return c.name }
 
-func (c *protoBinaryCodec) Marshal(message any) ([]byte, error) {
-	if msg, ok := message.(*dynamicpb.Message); ok && msg == nil {
-		return nil, nil
-	}
-	protoMessage, ok := message.(proto.Message)
-	if !ok {
-		return nil, fmt.Errorf("%T doesn't implement proto.Message", message)
-	}
-	return proto.Marshal(protoMessage)
-}
-
-func (c *protoBinaryCodec) Unmarshal(data []byte, message any) error {
+func (c *dynamicpbCodec) Marshal(message any) ([]byte, error) {
 	if msg, ok := message.(**dynamicpb.Message); ok {
-		new := dynamicpb.NewMessage(c.desc)
-		*msg = new
-		return proto.Unmarshal(data, *msg)
+		if *msg == nil {
+			return nil, nil
+		}
+		return c.marshal(*msg)
+	} else if msg, ok := message.(proto.Message); ok {
+		return c.marshal(msg)
 	}
-	protoMessage, ok := message.(proto.Message)
-	if !ok {
-		return fmt.Errorf("%T doesn't implement proto.Message", message)
-	}
-	return proto.Unmarshal(data, protoMessage)
+	return nil, fmt.Errorf("marshal error: invalid message type: %T", message)
 }
 
-type protoJSONCodec struct {
-	desc protoreflect.MessageDescriptor
-}
-
-func (c *protoJSONCodec) Name() string { return "json" }
-
-func (c *protoJSONCodec) Marshal(message any) ([]byte, error) {
-	if msg, ok := message.(*dynamicpb.Message); ok && msg == nil {
-		return nil, nil
-	}
-	protoMessage, ok := message.(proto.Message)
-	if !ok {
-		return nil, fmt.Errorf("%T doesn't implement proto.Message", message)
-	}
-	return protojson.Marshal(protoMessage)
-}
-
-func (c *protoJSONCodec) Unmarshal(binary []byte, message any) error {
+func (c *dynamicpbCodec) Unmarshal(data []byte, message any) error {
 	if msg, ok := message.(**dynamicpb.Message); ok {
-		new := dynamicpb.NewMessage(c.desc)
-		*msg = new
-		return protojson.Unmarshal(binary, *msg)
+		*msg = dynamicpb.NewMessage(c.desc)
+		return c.unmarshal(data, *msg)
+	} else if msg, ok := message.(proto.Message); ok {
+		return c.unmarshal(data, msg)
 	}
-	protoMessage, ok := message.(proto.Message)
-	if !ok {
-		return fmt.Errorf("%T doesn't implement proto.Message", message)
-	}
-	return protojson.Unmarshal(binary, protoMessage)
+	return fmt.Errorf("unmarshal error: invalid message type: %T", message)
 }
-
-type protoJSONUTF8Codec struct{ protoJSONCodec }
-
-func (c *protoJSONUTF8Codec) Name() string { return "json; charset=utf-8" }
