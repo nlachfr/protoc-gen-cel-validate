@@ -13,41 +13,37 @@ import (
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
-type MethodHandlerBuilder func(rpc string, srv validate.ServiceRuleValidater, client *connect.Client[dynamicpb.Message, *dynamicpb.Message], opts ...connect.HandlerOption) (string, http.Handler)
+type MethodHandlerBuilder func(rpc string, srv validate.ServiceRuleValidater, client *connect.Client[*dynamicpb.Message, *dynamicpb.Message], opts ...connect.HandlerOption) (string, http.Handler)
 
-func NewServiceHandler(target string, httpClient connect.HTTPClient, srv validate.ServiceRuleValidater, desc protoreflect.ServiceDescriptor, opts ...connect.HandlerOption) (string, http.Handler) {
-	pattern := fmt.Sprintf("/%s/", desc.FullName())
+func NewServiceHandler(sd protoreflect.ServiceDescriptor, srv validate.ServiceRuleValidater, upstream *Upstream, opts ...connect.HandlerOption) (string, http.Handler) {
+	sroot := fmt.Sprintf("/%s/", sd.FullName())
 	mux := http.NewServeMux()
-	for i := 0; i < desc.Methods().Len(); i++ {
-		methodDesc := desc.Methods().Get(i)
-		var handlerBuilder MethodHandlerBuilder
-		if methodDesc.IsStreamingClient() {
-			if methodDesc.IsStreamingServer() {
-				handlerBuilder = NewBidiStreamMethodHandler
+	for i := 0; i < sd.Methods().Len(); i++ {
+		md := sd.Methods().Get(i)
+		mroot := sroot + string(md.Name())
+		var builder MethodHandlerBuilder
+		if md.IsStreamingClient() {
+			if md.IsStreamingServer() {
+				builder = NewBidiStreamMethodHandler
 			} else {
-				handlerBuilder = NewClientStreamMethodHandler
+				builder = NewClientStreamMethodHandler
 			}
-		} else if methodDesc.IsStreamingServer() {
-			handlerBuilder = NewServerStreamMethodHandler
+		} else if md.IsStreamingServer() {
+			builder = NewServerStreamMethodHandler
 		} else {
-			handlerBuilder = NewUnaryMethodHandler
+			builder = NewUnaryMethodHandler
 		}
-		mux.Handle(handlerBuilder(
-			pattern+string(methodDesc.Name()),
-			srv,
-			connect.NewClient[dynamicpb.Message, *dynamicpb.Message](httpClient, target, buildClientCodecs(methodDesc.Output())...),
-			append(opts, buildHandlerCodecs(methodDesc.Input())...)...,
-		))
+		mux.Handle(builder(mroot, srv, upstream.NewClient(md), append(opts, newCodecs(md.Input()))...))
 	}
-	return pattern, mux
+	return sroot, mux
 }
 
-func NewUnaryMethodHandler(rpc string, srv validate.ServiceRuleValidater, client *connect.Client[dynamicpb.Message, *dynamicpb.Message], opts ...connect.HandlerOption) (string, http.Handler) {
+func NewUnaryMethodHandler(rpc string, srv validate.ServiceRuleValidater, client *connect.Client[*dynamicpb.Message, *dynamicpb.Message], opts ...connect.HandlerOption) (string, http.Handler) {
 	return rpc, connect.NewUnaryHandler(rpc, func(ctx context.Context, r *connect.Request[*dynamicpb.Message]) (*connect.Response[dynamicpb.Message], error) {
 		if err := srv.Validate(ctx, BuildAttributeContext(r.Spec(), r.Peer(), r.Header()), *r.Msg); err != nil {
 			fmt.Printf("%t\n", err)
 			return nil, err
-		} else if res, err := client.CallUnary(ctx, connect.NewRequest(*r.Msg)); err != nil {
+		} else if res, err := client.CallUnary(ctx, r); err != nil {
 			return nil, err
 		} else {
 			return connect.NewResponse(*res.Msg), nil
@@ -55,14 +51,14 @@ func NewUnaryMethodHandler(rpc string, srv validate.ServiceRuleValidater, client
 	}, opts...)
 }
 
-func NewClientStreamMethodHandler(rpc string, srv validate.ServiceRuleValidater, client *connect.Client[dynamicpb.Message, *dynamicpb.Message], opts ...connect.HandlerOption) (string, http.Handler) {
+func NewClientStreamMethodHandler(rpc string, srv validate.ServiceRuleValidater, client *connect.Client[*dynamicpb.Message, *dynamicpb.Message], opts ...connect.HandlerOption) (string, http.Handler) {
 	return rpc, connect.NewClientStreamHandler(rpc, func(ctx context.Context, cs *connect.ClientStream[*dynamicpb.Message]) (*connect.Response[dynamicpb.Message], error) {
 		csfc := client.CallClientStream(ctx)
 		defer csfc.CloseAndReceive()
 		attr := BuildAttributeContext(cs.Spec(), cs.Peer(), cs.RequestHeader())
 		for cs.Receive() {
-			msg := *cs.Msg()
-			if err := srv.Validate(ctx, attr, msg); err != nil {
+			msg := cs.Msg()
+			if err := srv.Validate(ctx, attr, *msg); err != nil {
 				return nil, err
 			} else if err = csfc.Send(msg); err != nil {
 				return nil, err
@@ -78,11 +74,11 @@ func NewClientStreamMethodHandler(rpc string, srv validate.ServiceRuleValidater,
 	})
 }
 
-func NewServerStreamMethodHandler(rpc string, srv validate.ServiceRuleValidater, client *connect.Client[dynamicpb.Message, *dynamicpb.Message], opts ...connect.HandlerOption) (string, http.Handler) {
+func NewServerStreamMethodHandler(rpc string, srv validate.ServiceRuleValidater, client *connect.Client[*dynamicpb.Message, *dynamicpb.Message], opts ...connect.HandlerOption) (string, http.Handler) {
 	return rpc, connect.NewServerStreamHandler(rpc, func(ctx context.Context, r *connect.Request[*dynamicpb.Message], ss *connect.ServerStream[dynamicpb.Message]) error {
 		if err := srv.Validate(ctx, BuildAttributeContext(r.Spec(), r.Peer(), r.Header()), *r.Msg); err != nil {
 			return err
-		} else if res, err := client.CallServerStream(ctx, connect.NewRequest(*r.Msg)); err != nil {
+		} else if res, err := client.CallServerStream(ctx, r); err != nil {
 			return err
 		} else {
 			defer res.Close()
@@ -112,7 +108,7 @@ func NewServerStreamMethodHandler(rpc string, srv validate.ServiceRuleValidater,
 	}, opts...)
 }
 
-func NewBidiStreamMethodHandler(rpc string, srv validate.ServiceRuleValidater, client *connect.Client[dynamicpb.Message, *dynamicpb.Message], opts ...connect.HandlerOption) (string, http.Handler) {
+func NewBidiStreamMethodHandler(rpc string, srv validate.ServiceRuleValidater, client *connect.Client[*dynamicpb.Message, *dynamicpb.Message], opts ...connect.HandlerOption) (string, http.Handler) {
 	return rpc, connect.NewBidiStreamHandler(rpc, func(ctx context.Context, bs *connect.BidiStream[*dynamicpb.Message, dynamicpb.Message]) error {
 		return nil
 	}, opts...)

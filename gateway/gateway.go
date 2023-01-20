@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -49,6 +50,48 @@ func CompileFiles(ctx context.Context, filesConfig *Configuration_Files) ([]link
 	}).Compile(ctx, files...)
 }
 
+func BuildUpstreamClient(cfg *Configuration_Upstream) (*http.Client, error) {
+	if cfg == nil || cfg.Address == "" {
+		return nil, fmt.Errorf("")
+	}
+	addrUrl, err := url.Parse(cfg.Address)
+	if err != nil {
+		return nil, err
+	}
+	var upstreamNet, upstreamAddr string = "tcp", addrUrl.Host
+	httpTransport := &http2.Transport{
+		AllowHTTP: true,
+	}
+	if cfg.Server != "" {
+		if srvUrl, err := url.Parse(cfg.Server); err != nil {
+			return nil, err
+		} else {
+			switch srvUrl.Scheme {
+			case "tcp", "tcp4", "tcp6", "udp", "udp4", "udp6", "unix", "unixgram", "unixpacket":
+				upstreamNet = srvUrl.Scheme
+				upstreamAddr = srvUrl.Host
+			default:
+				return nil, fmt.Errorf(`unknown scheme: "%s"`, srvUrl.Scheme)
+			}
+		}
+	}
+	switch addrUrl.Scheme {
+	case "http":
+		httpTransport.DialTLSContext = func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+			return net.DefaultResolver.Dial(ctx, upstreamNet, upstreamAddr)
+		}
+	case "https":
+		httpTransport.DialTLSContext = func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+			return tls.Dial(upstreamNet, upstreamAddr, httpTransport.TLSClientConfig)
+		}
+	default:
+		return nil, fmt.Errorf(`unknown scheme: "%s"`, addrUrl.Scheme)
+	}
+	return &http.Client{
+		Transport: httpTransport,
+	}, nil
+}
+
 func NewGateway(ctx context.Context, config *Configuration) (http.Handler, error) {
 	mux := http.NewServeMux()
 	if config == nil {
@@ -74,25 +117,10 @@ func NewGateway(ctx context.Context, config *Configuration) (http.Handler, error
 			}
 			for i := 0; i < file.Services().Len(); i++ {
 				sd := file.Services().Get(i)
-				if upstreamConfig, ok := config.Upstreams[string(sd.FullName())]; ok && upstreamConfig.Address != "" {
-					httpTransport := &http.Transport{
-						ForceAttemptHTTP2: true,
-					}
-					_, err := url.Parse(upstreamConfig.Address)
+				if upstreamConfig, ok := config.Upstreams[string(sd.FullName())]; ok {
+					upstream, err := NewUpstream(upstreamConfig)
 					if err != nil {
 						return nil, err
-					}
-					if upstreamConfig.Server != "" {
-						srvUrl, err := url.Parse(upstreamConfig.Server)
-						if err != nil {
-							return nil, err
-						}
-						httpTransport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-							return net.DefaultResolver.Dial(ctx, srvUrl.Scheme, srvUrl.Host)
-						}
-					}
-					httpClient := &http.Client{
-						Transport: httpTransport,
 					}
 					wg.Add(1)
 					go func() {
@@ -101,7 +129,7 @@ func NewGateway(ctx context.Context, config *Configuration) (http.Handler, error
 						if err != nil {
 							errChan <- err
 						}
-						rpc, handler := NewServiceHandler(upstreamConfig.Address, httpClient, svr, sd)
+						rpc, handler := NewServiceHandler(sd, svr, upstream)
 						handlerChan <- struct {
 							rpc     string
 							handler http.Handler
