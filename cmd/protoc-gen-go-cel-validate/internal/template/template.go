@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/Neakxs/protocel/cmd/protoc-gen-go-cel-validate/internal/version"
+	"github.com/nlachfr/protocel/cmd/protoc-gen-go-cel-validate/internal/version"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -42,10 +42,10 @@ func GenerateTemplate(v *pluginpb.Version, g *protogen.GeneratedFile) (*template
 			return g.QualifiedGoIdent(protogen.GoImportPath("sync").Ident(s))
 		},
 		"validate": func(s string) string {
-			return g.QualifiedGoIdent(protogen.GoImportPath("github.com/Neakxs/protocel/validate").Ident(s))
+			return g.QualifiedGoIdent(protogen.GoImportPath("github.com/nlachfr/protocel/validate").Ident(s))
 		},
 		"options": func(s string) string {
-			return g.QualifiedGoIdent(protogen.GoImportPath("github.com/Neakxs/protocel/options").Ident(s))
+			return g.QualifiedGoIdent(protogen.GoImportPath("github.com/nlachfr/protocel/options").Ident(s))
 		},
 		"cel": func(s string) string {
 			return g.QualifiedGoIdent(protogen.GoImportPath("github.com/google/cel-go/cel").Ident(s))

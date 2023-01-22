@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package testdata.validate;
-option go_package = "github.com/Neakxs/protocel/testdata/validate";
+option go_package = "github.com/nlachfr/protocel/testdata/validate";
 
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";

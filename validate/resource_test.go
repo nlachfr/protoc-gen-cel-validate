@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Neakxs/protocel/testdata/validate"
+	"github.com/nlachfr/protocel/testdata/validate"
 )
 
 func TestGenerateResourceTypePatternMapping(t *testing.T) {

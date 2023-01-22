@@ -1,6 +1,6 @@
 # protocel
 
-[![Coverage](https://coveralls.io/repos/Neakxs/protocel/badge.svg?branch=main&service=github)](https://coveralls.io/github/Neakxs/protocel?branch=main) [![GoReportCard](https://goreportcard.com/badge/github.com/Neakxs/protocel)](https://goreportcard.com/badge/github.com/Neakxs/protocel) ![GitHub](https://img.shields.io/github/license/Neakxs/protocel)
+[![Coverage](https://coveralls.io/repos/nlachfr/protocel/badge.svg?branch=main&service=github)](https://coveralls.io/github/nlachfr/protocel?branch=main) [![GoReportCard](https://goreportcard.com/badge/github.com/nlachfr/protocel)](https://goreportcard.com/badge/github.com/nlachfr/protocel) ![GitHub](https://img.shields.io/github/license/nlachfr/protocel)
 
 ## About
 
@@ -24,13 +24,13 @@ With v0.2.0, the `protoc-gen-cel-validate` plugin features :
 
 Since `protoc-gen-cel-validate` is able to fully replace `protoc-gen-cel-authorize`, this plugin is now longer maintained.
 
-> An example is located at [protocel-example](https://github.com/Neakxs/protocel-example) repository.
+> An example is located at [protocel-example](https://github.com/nlachfr/protocel-example) repository.
 ## Installation
 
 For installating the plugin, you can simply run the `go install` command :
 
 ```shell
-go install github.com/Neakxs/protocel/cmd/protoc-gen-go-cel-validate
+go install github.com/nlachfr/protocel/cmd/protoc-gen-go-cel-validate
 ```
 
 The binary will be placed in your $GOBIN location.
@@ -112,7 +112,7 @@ Furthermore, every message including validation rules provides the `validate()` 
 syntax = "proto3";
 
 package testdata.basic;
-option go_package = "github.com/Neakxs/protocel/testdata/validate/basic";
+option go_package = "github.com/nlachfr/protocel/testdata/validate/basic";
 
 import "validate/validate.proto";
 import "google/api/field_behavior.proto";

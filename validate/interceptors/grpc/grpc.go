@@ -5,7 +5,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/Neakxs/protocel/validate"
+	"github.com/nlachfr/protocel/validate"
 	"google.golang.org/genproto/googleapis/rpc/context/attribute_context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

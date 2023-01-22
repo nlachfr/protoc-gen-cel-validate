@@ -1,4 +1,4 @@
-module github.com/Neakxs/protocel
+module github.com/nlachfr/protocel
 
 go 1.19
 

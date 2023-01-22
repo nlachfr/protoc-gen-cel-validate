@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Neakxs/protocel/validate/errors"
 	"github.com/google/cel-go/common/types"
+	"github.com/nlachfr/protocel/validate/errors"
 	"google.golang.org/genproto/googleapis/rpc/context/attribute_context"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"

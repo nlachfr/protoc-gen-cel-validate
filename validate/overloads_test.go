@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Neakxs/protocel/testdata/validate"
 	"github.com/google/cel-go/cel"
+	"github.com/nlachfr/protocel/testdata/validate"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )

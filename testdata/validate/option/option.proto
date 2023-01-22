@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package testdata.option;
-option go_package = "github.com/Neakxs/protocel/testdata/validate/option";
+option go_package = "github.com/nlachfr/protocel/testdata/validate/option";
 
 import "google/protobuf/empty.proto";
 import "validate/validate.proto";
