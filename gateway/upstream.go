@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
-func NewUpstream(cfg *Configuration_Upstream) (*Upstream, error) {
+func NewUpstream(cfg *Configuration_Server_Upstream) (*Upstream, error) {
 	if cfg == nil || cfg.Address == "" {
 		return nil, fmt.Errorf("")
 	}
@@ -57,7 +57,6 @@ func NewUpstream(cfg *Configuration_Upstream) (*Upstream, error) {
 			httpTransport = &http2.Transport{
 				AllowHTTP: true,
 				DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-					fmt.Println(1, network, addr, cfg)
 					return dialer.DialContext(ctx, srvnet, srvaddr)
 				},
 			}
@@ -65,8 +64,7 @@ func NewUpstream(cfg *Configuration_Upstream) (*Upstream, error) {
 			httpTransport = &http2.Transport{
 				AllowHTTP: true,
 				DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-					fmt.Println(2, network, addr, cfg)
-					return net.Dial(network, addr)
+					return dialer.DialContext(ctx, network, addr)
 				},
 			}
 		}
@@ -77,14 +75,12 @@ func NewUpstream(cfg *Configuration_Upstream) (*Upstream, error) {
 			}
 			httpTransport = &http2.Transport{
 				DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-					fmt.Println(3, network, addr, cfg)
 					return tls.DialWithDialer(dialer, srvnet, srvaddr, cfg)
 				},
 			}
 		} else {
 			httpTransport = &http2.Transport{
 				DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-					fmt.Println(4, network, addr, cfg)
 					return tls.DialWithDialer(dialer, network, addr, cfg)
 				},
 			}
@@ -94,12 +90,12 @@ func NewUpstream(cfg *Configuration_Upstream) (*Upstream, error) {
 	}
 	var opt connect.ClientOption
 	switch cfg.Protocol {
-	case Configuration_Upstream_GRPC:
+	case Configuration_Server_Upstream_GRPC:
 		opt = connect.WithGRPC()
-	case Configuration_Upstream_GRPC_WEB:
+	case Configuration_Server_Upstream_GRPC_WEB:
 		opt = connect.WithGRPCWeb()
-	case Configuration_Upstream_CONNECT:
-		opt = connect.WithProtoJSON()
+	case Configuration_Server_Upstream_CONNECT:
+		// opt = connect.WithProtoJSON()
 	}
 	return &Upstream{
 		target: addrUrl,
@@ -117,9 +113,13 @@ type Upstream struct {
 }
 
 func (u *Upstream) NewClient(md protoreflect.MethodDescriptor) *connect.Client[*dynamicpb.Message, *dynamicpb.Message] {
+	opts := []connect.ClientOption{newCodecs(md.Output())}
+	if u.opt != nil {
+		opts = append(opts, u.opt)
+	}
 	return connect.NewClient[*dynamicpb.Message, *dynamicpb.Message](
 		u.httpClient,
 		u.target.JoinPath(fmt.Sprintf("/%s/%s", md.Parent().FullName(), md.Name())).String(),
-		u.opt, newCodecs(md.Output()),
+		opts...,
 	)
 }

@@ -6,19 +6,25 @@ option go_package = "github.com/Neakxs/protocel/gateway";
 import "validate/validate.proto";
 
 message Configuration {
-    message Serve {
-        repeated string bind = 1;
-    }
-    message Upstream {
-        string address = 1;
-        string server = 2;
+    message Server {
+        message Upstream {
+            enum Protocol {
+                GRPC = 0;
+                GRPC_WEB = 1;
+                CONNECT = 2;
+            }
+            string address = 1;
+            string server = 2;
+            Protocol protocol = 3;
+        }
+        repeated string listen = 1;
+        map<string,Upstream> upstreams = 2;
     }
     message Files {
         repeated string sources = 1;
         repeated string imports = 2;
     }
-    Serve serve = 1;
-    map<string,Upstream> upstreams = 2;
-    Files files = 3;
+    repeated Server servers = 1;
+    Files files = 2;
     protocel.validate.Options validate = 10;
 }

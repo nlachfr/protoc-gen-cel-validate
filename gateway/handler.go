@@ -39,14 +39,13 @@ func NewServiceHandler(sd protoreflect.ServiceDescriptor, srv validate.ServiceRu
 }
 
 func NewUnaryMethodHandler(rpc string, srv validate.ServiceRuleValidater, client *connect.Client[*dynamicpb.Message, *dynamicpb.Message], opts ...connect.HandlerOption) (string, http.Handler) {
-	return rpc, connect.NewUnaryHandler(rpc, func(ctx context.Context, r *connect.Request[*dynamicpb.Message]) (*connect.Response[dynamicpb.Message], error) {
+	return rpc, connect.NewUnaryHandler(rpc, func(ctx context.Context, r *connect.Request[*dynamicpb.Message]) (*connect.Response[*dynamicpb.Message], error) {
 		if err := srv.Validate(ctx, BuildAttributeContext(r.Spec(), r.Peer(), r.Header()), *r.Msg); err != nil {
-			fmt.Printf("%t\n", err)
 			return nil, err
 		} else if res, err := client.CallUnary(ctx, r); err != nil {
 			return nil, err
 		} else {
-			return connect.NewResponse(*res.Msg), nil
+			return res, nil
 		}
 	}, opts...)
 }

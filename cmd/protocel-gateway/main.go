@@ -5,8 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net"
-	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -40,44 +38,41 @@ func main() {
 			log.Fatalf("cannot load config: %v", err)
 		}
 	}
-	listeners := []net.Listener{}
-	if c.Serve != nil {
-		for _, bindAddr := range c.Serve.Bind {
-			parts := strings.SplitN(bindAddr, "://", 2)
-			if len(parts) == 1 {
-				if listener, err := net.Listen("tcp", bindAddr); err != nil {
-					log.Fatalf("cannot bind: %v", err)
-				} else {
-					listeners = append(listeners, listener)
-				}
-			} else {
-				if listener, err := net.Listen(parts[0], parts[1]); err != nil {
-					log.Fatalf("cannot bind: %v", err)
-				} else {
-					listeners = append(listeners, listener)
-				}
-			}
-
-		}
-	} else {
-		log.Fatal("no binding address")
-	}
-	handler, err := gateway.NewGateway(context.Background(), c)
+	linker, err := gateway.NewLinker(context.TODO(), c.Files)
 	if err != nil {
 		log.Fatal(err)
+	}
+	srvs := []*gateway.Server{}
+	for _, srvCfg := range c.Servers {
+		srv, err := gateway.NewServer(linker, srvCfg, c.Validate)
+		if err != nil {
+			log.Fatal(err)
+		}
+		srvs = append(srvs, srv)
 	}
 	fmt.Println("Starting server with following configuration :")
 	b, _ := yaml.Marshal(c)
 	fmt.Printf("\n\t%s\n", strings.ReplaceAll(string(b), "\n", "\n\t"))
-	wg := sync.WaitGroup{}
-	for _, l := range listeners {
+	wg := &sync.WaitGroup{}
+	errChan := make(chan error)
+	doneChan := make(chan struct{})
+	for _, srv := range srvs {
 		wg.Add(1)
-		go func(l net.Listener) {
-			if err := http.Serve(l, handler); err != nil {
-				log.Fatal(err)
+		go func(srv *gateway.Server) {
+			defer wg.Done()
+			if err := srv.ListenAndServe(); err != nil {
+				errChan <- err
 			}
-			wg.Done()
-		}(l)
+		}(srv)
 	}
-	wg.Wait()
+	go func() {
+		wg.Wait()
+		doneChan <- struct{}{}
+	}()
+	select {
+	case err := <-errChan:
+		log.Fatal(err)
+	case <-doneChan:
+		return
+	}
 }
