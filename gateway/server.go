@@ -5,45 +5,61 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 
 	"github.com/Neakxs/protocel/validate"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func removePatternDuplicates(patterns []string) ([]string, error) {
-	if len(patterns) <= 1 {
-		return patterns, nil
-	}
-	np := []string{}
-	sp := sort.StringSlice(patterns)
-	sp.Sort()
-	for sp.Len() > 1 {
-		ok, err := filepath.Match(sp[0], sp[1])
-		if err != nil {
+func findServiceUpstream(sd protoreflect.ServiceDescriptor, upstreams map[string]*Upstream) (upstream *Upstream, err error) {
+	name := string(sd.FullName())
+	patternParts := []string{}
+	for p, u := range upstreams {
+		if matched, err := filepath.Match(p, name); err != nil {
 			return nil, err
-		}
-		if ok {
-			sp = append([]string{sp[0]}, sp[2:]...)
-		} else {
-			np = append(np, sp[0])
-			sp = sp[1:]
+		} else if matched {
+			selectUpstream := false
+			newPatternParts := strings.Split(p, ".")
+			if len(patternParts) < len(newPatternParts) {
+				selectUpstream = true
+			} else if len(patternParts) == len(newPatternParts) {
+				for i := 0; i < len(patternParts); i++ {
+					lp := patternParts[i]
+					rp := newPatternParts[i]
+					if strings.Contains(lp, "*") {
+						if !strings.Contains(rp, "*") {
+							selectUpstream = true
+							break
+						}
+					} else if strings.Contains(rp, "*") {
+						break
+					}
+					if rp[i] > lp[i] {
+						selectUpstream = true
+						break
+					}
+				}
+			}
+			if selectUpstream {
+				patternParts = newPatternParts
+				upstream = u
+			}
 		}
 	}
-	return append(np, sp[0]), nil
+	return upstream, nil
 }
 
 func NewServer(linker *Linker, serverCfg *Configuration_Server, opts *validate.Options) (*Server, error) {
-	patterns := []string{}
-	for p := range serverCfg.Upstreams {
-		patterns = append(patterns, p)
-	}
-	patterns, err := removePatternDuplicates(patterns)
-	if err != nil {
-		return nil, err
+	upstreams := map[string]*Upstream{}
+	for pattern, upstreamCfg := range serverCfg.Upstreams {
+		upstream, err := NewUpstream(upstreamCfg)
+		if err != nil {
+			return nil, err
+		}
+		upstreams[pattern] = upstream
 	}
 	handlerChan := make(chan struct {
 		rpc     string
@@ -52,37 +68,31 @@ func NewServer(linker *Linker, serverCfg *Configuration_Server, opts *validate.O
 	errChan := make(chan error)
 	doneChan := make(chan struct{})
 	wg := &sync.WaitGroup{}
-	for _, pattern := range patterns {
-		upstream, err := NewUpstream(serverCfg.Upstreams[pattern])
+	for _, file := range linker.files {
+		manager, err := validate.NewManager(file, validate.WithFallbackOverloads(), validate.WithOptions(opts))
 		if err != nil {
 			return nil, err
 		}
-		for _, file := range linker.files {
-			manager, err := validate.NewManager(file, validate.WithFallbackOverloads(), validate.WithOptions(opts))
-			if err != nil {
+		for i := 0; i < file.Services().Len(); i++ {
+			sd := file.Services().Get(i)
+			if upstream, err := findServiceUpstream(sd, upstreams); err != nil {
 				return nil, err
-			}
-			for i := 0; i < file.Services().Len(); i++ {
-				sd := file.Services().Get(i)
-				if match, err := filepath.Match(pattern, string(sd.FullName())); err != nil {
-					return nil, err
-				} else if match {
-					wg.Add(1)
-					go func() {
-						defer wg.Done()
-						svr, err := manager.GetServiceRuleValidater(sd)
-						if err != nil {
-							errChan <- err
-						}
-						rpc, handler := NewServiceHandler(sd, svr, upstream)
-						handlerChan <- struct {
-							rpc     string
-							handler http.Handler
-						}{
-							rpc: rpc, handler: handler,
-						}
-					}()
-				}
+			} else if upstream != nil {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					svr, err := manager.GetServiceRuleValidater(sd)
+					if err != nil {
+						errChan <- err
+					}
+					rpc, handler := NewServiceHandler(sd, svr, upstream)
+					handlerChan <- struct {
+						rpc     string
+						handler http.Handler
+					}{
+						rpc: rpc, handler: handler,
+					}
+				}()
 			}
 		}
 	}
