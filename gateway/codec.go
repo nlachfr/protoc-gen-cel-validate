@@ -46,7 +46,7 @@ func (c *dynamicpbCodec) Name() string { return c.name }
 func (c *dynamicpbCodec) Marshal(message any) ([]byte, error) {
 	if msg, ok := message.(**dynamicpb.Message); ok {
 		if *msg == nil {
-			return nil, nil
+			*msg = dynamicpb.NewMessage(c.desc)
 		}
 		return c.marshal(*msg)
 	} else if msg, ok := message.(proto.Message); ok {
