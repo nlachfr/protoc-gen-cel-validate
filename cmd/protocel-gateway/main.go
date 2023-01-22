@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Neakxs/protocel/gateway"
+	"github.com/nlachfr/protocel/gateway"
 	"gopkg.in/yaml.v3"
 )
 

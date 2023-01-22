@@ -7,7 +7,7 @@
 package gateway
 
 import (
-	validate "github.com/Neakxs/protocel/validate"
+	validate "github.com/nlachfr/protocel/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

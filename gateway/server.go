@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Neakxs/protocel/validate"
+	"github.com/nlachfr/protocel/validate"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/protobuf/reflect/protoreflect"

@@ -7,8 +7,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/Neakxs/protocel/validate"
 	"github.com/bufbuild/connect-go"
+	"github.com/nlachfr/protocel/validate"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 )

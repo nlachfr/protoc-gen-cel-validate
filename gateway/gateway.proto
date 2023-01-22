@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package protocel.gateway;
-option go_package = "github.com/Neakxs/protocel/gateway";
+option go_package = "github.com/nlachfr/protocel/gateway";
 
 import "validate/validate.proto";
 
