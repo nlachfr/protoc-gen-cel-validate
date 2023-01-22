@@ -3,8 +3,8 @@ package validate
 import (
 	"testing"
 
-	"github.com/Neakxs/protocel/options"
-	"github.com/Neakxs/protocel/testdata/validate"
+	"github.com/nlachfr/protocel/options"
+	"github.com/nlachfr/protocel/testdata/validate"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 

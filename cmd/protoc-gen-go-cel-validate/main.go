@@ -4,9 +4,9 @@ import (
 	"flag"
 	"os"
 
-	"github.com/Neakxs/protocel/cmd/protoc-gen-go-cel-validate/internal/plugin"
-	"github.com/Neakxs/protocel/options"
-	"github.com/Neakxs/protocel/validate"
+	"github.com/nlachfr/protocel/cmd/protoc-gen-go-cel-validate/internal/plugin"
+	"github.com/nlachfr/protocel/options"
+	"github.com/nlachfr/protocel/validate"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"gopkg.in/yaml.v3"

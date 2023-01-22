@@ -5,10 +5,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Neakxs/protocel/options"
-	"github.com/Neakxs/protocel/testdata/validate"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
+	"github.com/nlachfr/protocel/options"
+	"github.com/nlachfr/protocel/testdata/validate"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
