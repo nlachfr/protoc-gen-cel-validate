@@ -94,8 +94,6 @@ func NewUpstream(cfg *Configuration_Server_Upstream) (*Upstream, error) {
 		opt = connect.WithGRPC()
 	case Configuration_Server_Upstream_GRPC_WEB:
 		opt = connect.WithGRPCWeb()
-	case Configuration_Server_Upstream_CONNECT:
-		// opt = connect.WithProtoJSON()
 	}
 	return &Upstream{
 		target: addrUrl,

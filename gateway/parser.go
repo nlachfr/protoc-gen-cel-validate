@@ -17,25 +17,37 @@ func NewLinker(ctx context.Context, filesConfig *Configuration_Files) (*Linker, 
 	if filesConfig == nil {
 		return nil, nil
 	}
-	files := []string{}
-	for _, path := range filesConfig.Sources {
-		if matches, err := filepath.Glob(path); err != nil {
-			return nil, err
-		} else if matches == nil {
-			return nil, fmt.Errorf("no matching file for pattern: %v", path)
-		} else {
-			files = append(files, matches...)
-		}
-	}
 	imports := []string{}
 	for _, path := range filesConfig.Imports {
 		if matches, err := filepath.Glob(path); err != nil {
 			return nil, err
 		} else if matches == nil {
-			return nil, fmt.Errorf("no matching file for pattern: %v", path)
+			return nil, fmt.Errorf("no matching file for import pattern: %v", path)
 		} else {
 			imports = append(imports, matches...)
 		}
+	}
+	if len(imports) == 0 {
+		imports = append(imports, ".")
+	}
+	files := []string{}
+	for _, path := range filesConfig.Sources {
+		var matches []string
+		for _, imp := range filesConfig.Imports {
+			if impMatches, err := filepath.Glob(filepath.Join(imp, path)); err != nil {
+				return nil, err
+			} else if impMatches != nil {
+				for _, v := range impMatches {
+					detectedPath, _ := filepath.Rel(imp, v)
+					matches = append(matches, detectedPath)
+				}
+				break
+			}
+		}
+		if len(matches) == 0 {
+			return nil, fmt.Errorf("no matching file for pattern: %v", path)
+		}
+		files = append(files, matches...)
 	}
 	res, err := (&protocompile.Compiler{
 		Resolver: protocompile.WithStandardImports(
