@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -53,6 +54,9 @@ func findServiceUpstream(sd protoreflect.ServiceDescriptor, upstreams map[string
 }
 
 func NewServer(linker *Linker, serverCfg *Configuration_Server, opts *validate.Options) (*Server, error) {
+	if serverCfg == nil {
+		return nil, fmt.Errorf("nil server config")
+	}
 	upstreams := map[string]*Upstream{}
 	for pattern, upstreamCfg := range serverCfg.Upstreams {
 		upstream, err := NewUpstream(upstreamCfg)
@@ -68,31 +72,33 @@ func NewServer(linker *Linker, serverCfg *Configuration_Server, opts *validate.O
 	errChan := make(chan error)
 	doneChan := make(chan struct{})
 	wg := &sync.WaitGroup{}
-	for _, file := range linker.files {
-		manager, err := validate.NewManager(file, validate.WithFallbackOverloads(), validate.WithOptions(opts))
-		if err != nil {
-			return nil, err
-		}
-		for i := 0; i < file.Services().Len(); i++ {
-			sd := file.Services().Get(i)
-			if upstream, err := findServiceUpstream(sd, upstreams); err != nil {
+	if linker != nil {
+		for _, file := range linker.files {
+			manager, err := validate.NewManager(file, validate.WithFallbackOverloads(), validate.WithOptions(opts))
+			if err != nil {
 				return nil, err
-			} else if upstream != nil {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					svr, err := manager.GetServiceRuleValidater(sd)
-					if err != nil {
-						errChan <- err
-					}
-					rpc, handler := NewServiceHandler(sd, svr, upstream)
-					handlerChan <- struct {
-						rpc     string
-						handler http.Handler
-					}{
-						rpc: rpc, handler: handler,
-					}
-				}()
+			}
+			for i := 0; i < file.Services().Len(); i++ {
+				sd := file.Services().Get(i)
+				if upstream, err := findServiceUpstream(sd, upstreams); err != nil {
+					return nil, err
+				} else if upstream != nil {
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						svr, err := manager.GetServiceRuleValidater(sd)
+						if err != nil {
+							errChan <- err
+						}
+						rpc, handler := NewServiceHandler(sd, svr, upstream)
+						handlerChan <- struct {
+							rpc     string
+							handler http.Handler
+						}{
+							rpc: rpc, handler: handler,
+						}
+					}()
+				}
 			}
 		}
 	}
@@ -106,25 +112,31 @@ func NewServer(linker *Linker, serverCfg *Configuration_Server, opts *validate.O
 		case err := <-errChan:
 			return nil, err
 		case handler := <-handlerChan:
-			fmt.Printf("\t%s: DONE\n", handler.rpc)
 			mux.Handle(handler.rpc, handler.handler)
 		case <-doneChan:
-			return &Server{addrs: serverCfg.Listen, handler: h2c.NewHandler(mux, &http2.Server{})}, nil
+			srv := &http.Server{Handler: h2c.NewHandler(mux, &http2.Server{})}
+			http2.ConfigureServer(srv, &http2.Server{})
+			return &Server{listenAddrs: serverCfg.Listen, srv: srv}, nil
 		}
 	}
 }
 
 type Server struct {
-	addrs   []string
-	handler http.Handler
+	listenAddrs []string
+	srv         *http.Server
 }
 
+func (s *Server) Close() error                       { return s.srv.Close() }
+func (s *Server) RegisterOnShutdown(f func())        { s.srv.RegisterOnShutdown(f) }
+func (s *Server) SetKeepAlivesEnabled(v bool)        { s.srv.SetKeepAlivesEnabled(v) }
+func (s *Server) Shutdown(ctx context.Context) error { return s.srv.Shutdown(ctx) }
+
 func (s *Server) ListenAndServe() error {
-	if len(s.addrs) == 0 {
+	if len(s.listenAddrs) == 0 {
 		return fmt.Errorf("no binding address")
 	}
 	listeners := []net.Listener{}
-	for _, bindAddr := range s.addrs {
+	for _, bindAddr := range s.listenAddrs {
 		parts := strings.SplitN(bindAddr, "://", 2)
 		if len(parts) == 1 {
 			if listener, err := net.Listen("tcp", bindAddr); err != nil {
@@ -140,26 +152,5 @@ func (s *Server) ListenAndServe() error {
 			}
 		}
 	}
-	errChan := make(chan error)
-	doneChan := make(chan struct{})
-	wg := sync.WaitGroup{}
-	for _, l := range listeners {
-		wg.Add(1)
-		go func(l net.Listener) {
-			if err := http.Serve(l, s.handler); err != nil {
-				errChan <- err
-			}
-			wg.Done()
-		}(l)
-	}
-	go func() {
-		wg.Wait()
-		doneChan <- struct{}{}
-	}()
-	select {
-	case err := <-errChan:
-		return err
-	case <-doneChan:
-		return nil
-	}
+	return s.srv.Serve(NewMultiListener(listeners...))
 }
