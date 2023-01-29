@@ -30,7 +30,6 @@ This repository contains two utilities :
 
 For now, the plugin is dedicated for the [Go](https://go.dev/). More languages may be added in the future, depending on available CEL implementations (and time). If you would like to add protocel rules in another language, you can still use the `protocel-gateway` for enforcing validation.
 
-> An example is located at [protocel-example](https://github.com/nlachfr/protocel-example) repository.
 ## Installation
 
 For installating the plugin or the gateway, you can simply run the `go install` command :
@@ -42,12 +41,10 @@ go install github.com/nlachfr/protocel/cmd/protocel-gateway
 
 The binary will be placed in your $GOBIN location.
 
-## Configuration
+## Rules configuration
 
-
-
-The plugin is highly using protobuf options, configuration file (using the `config=path/to/config.yml` option) or both.
-The configuration can be defined at various levels of the protobuf specification, with the following loading orders :
+Protocel is highly configurable: validation rules can be written using protobuf options, a configuration file or both. 
+Furthermore, options can be defined at various levels of your specification, with the following loading orders :
 
 - configuration file > file option > service option > method option
 - configuration file > file option > message option > field option
@@ -102,7 +99,16 @@ message RpcRequest {
 }
 ```
 
-## Usage of `protoc-gen-cel-validate`
+For more information on configuration fields, have a look at the [`protocel.validate.Options`](./validate/validate.proto) message specification.
+
+## `protoc-gen-cel-validate`
+
+### Configuration file
+
+Even if rules can be written in the protobuf definition, you might not be able to edit the files for your use case. This is why you can use an external file for adding custom validation using the **config=/path/to/config.yml** parameter.
+
+The configuration file will be loaded as a global `protocel.validate.Options` and will be used in all the generated files.
+### Writing rules
 
 For writing validation rules, some variables are defined, depending on the scope of the rule.
 
@@ -113,7 +119,9 @@ For writing validation rules, some variables are defined, depending on the scope
 
 Furthermore, every message including validation rules provides the `validate()` and `validateWithMask(google.protobuf.FieldMask)` methods, allowing nested validation calls.
 
-## Example
+### Example
+
+> An complete example is located at [protocel-example](https://github.com/nlachfr/protocel-example) repository.
 
 1. Create protobuf definition
 
@@ -143,3 +151,49 @@ message BasicRequest {
 
 2. Generate protobuf code
 3. For validating message, just call the `Validate` or `ValidateWithMask` methods on the corresponding messages. For validating methods of a service, build a `ServiceValidateProgram` using the generated builder and call the `Validate` method.
+
+## `protocel-gateway`
+
+### Configuration file
+
+In order to use the gateway, you must provided a configuration file. It will allows you to :
+- define listening address and upstreams
+- specify proto files location
+- configure protocel validation
+
+All the configuration fields are specified in the [`protocel.gateway.Configuration`](./gateway/gateway.proto) message specification.
+### Example
+
+1. Create your configuration file
+
+```yml
+servers:
+  - listen:
+      - 127.0.0.1:8888
+    upstreams:
+      '*':
+        address: https://demo.connect.build    
+        protocol: grpc
+files:
+  sources:
+    - proto/*.proto
+  imports:
+    - "."
+validate:
+  rule:
+    servicerules:
+      buf.connect.demo.eliza.v1.ElizaService:
+        rule:
+          programs:
+            - expr: 'attribute_context.request.headers["ok"] == "ok"'      
+      connect.ping.v1.PingService:
+        rule:
+          programs:
+            - expr: 'attribute_context.request.headers["ok"] == "ok"'
+```
+
+2. Call protocel-gateway with your newly created configuration
+
+```bash
+$ protocel-gateway -config ./config.yml
+```
