@@ -24,7 +24,12 @@ message Configuration {
         repeated string sources = 1;
         repeated string imports = 2;
     }
+    message Plugin {
+        string path = 1;
+        map<string,string> args = 2;
+    }
     repeated Server servers = 1;
     Files files = 2;
+    repeated Plugin plugins = 3;
     protocel.validate.Configuration validate = 10;
 }

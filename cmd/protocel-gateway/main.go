@@ -42,9 +42,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	envOpt, err := gateway.LoadPlugins(c.Plugins...)
+	if err != nil {
+		log.Fatal(err)
+	}
 	srvs := []*gateway.Server{}
 	for _, srvCfg := range c.Servers {
-		srv, err := gateway.NewServer(linker, srvCfg, c.Validate)
+		srv, err := gateway.NewServer(linker, srvCfg, c.Validate, envOpt)
 		if err != nil {
 			log.Fatal(err)
 		}
