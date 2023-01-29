@@ -37,8 +37,7 @@ func findServiceUpstream(sd protoreflect.ServiceDescriptor, upstreams map[string
 						}
 					} else if strings.Contains(rp, "*") {
 						break
-					}
-					if rp[i] > lp[i] {
+					} else if strings.Compare(rp, lp) > 0 {
 						selectUpstream = true
 						break
 					}
