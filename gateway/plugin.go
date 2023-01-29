@@ -1,13 +1,12 @@
 package gateway
 
 import (
+	"fmt"
 	"plugin"
 
 	"github.com/google/cel-go/cel"
 	"github.com/nlachfr/protocel/validate"
 )
-
-const SYM_PLUGIN = "ProtocelPlugin"
 
 type Plugin interface {
 	Name() string
@@ -26,17 +25,21 @@ func LoadPlugins(cfgs ...*Configuration_Plugin) (cel.EnvOption, error) {
 	}
 	libs := &validate.Library{}
 	for p, cfg := range plugins {
-		symbol, err := p.Lookup(SYM_PLUGIN)
+		symbol, err := p.Lookup("New")
 		if err != nil {
 			return nil, err
-		} else if gwPlugin, ok := symbol.(Plugin); !ok {
+		} else if new, ok := symbol.(func() interface{}); !ok {
+			return nil, fmt.Errorf("invalid symbol")
+		} else if gwplugin, ok := new().(Plugin); !ok {
+			return nil, fmt.Errorf("invalid plugin")
+		} else {
 			args := []string{cfg.Path}
 			for k, v := range cfg.Args {
 				args = append(args, "-"+k, v)
 			}
-			if lib, err := gwPlugin.BuildLibrary(args...); err != nil {
+			if lib, err := gwplugin.BuildLibrary(args...); err != nil {
 				return nil, err
-			} else {
+			} else if lib != nil {
 				libs.EnvOpts = append(libs.EnvOpts, cel.Lib(lib))
 			}
 		}
