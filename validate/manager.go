@@ -6,7 +6,6 @@ import (
 	sync "sync"
 
 	"github.com/google/cel-go/cel"
-	"github.com/nlachfr/protocel/options"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -75,13 +74,13 @@ func WithFallbackOverloads() ManagerOption {
 	})
 }
 
-func WithOptions(optsList ...*Options) ManagerOption {
+func WithConfiguration(cfgList ...*Configuration) ManagerOption {
 	return managerOption(func(b *builder) {
-		opts := &Options{}
+		opts := &Configuration{}
 		if b.opts != nil {
-			opts = proto.Clone(b.opts).(*Options)
+			opts = proto.Clone(b.opts).(*Configuration)
 		}
-		for _, o := range optsList {
+		for _, o := range cfgList {
 			if o != nil {
 				proto.Merge(opts, o)
 			}
@@ -135,7 +134,7 @@ func (m *Manager) LoadLibrary(lib cel.Library) error {
 		return nil
 	}
 	if m.b.envOpt != nil {
-		cel.Lib(&options.Library{EnvOpts: []cel.EnvOption{m.b.envOpt, cel.Lib(lib)}})
+		cel.Lib(&Library{EnvOpts: []cel.EnvOption{m.b.envOpt, cel.Lib(lib)}})
 	} else {
 		m.b.envOpt = cel.Lib(lib)
 	}

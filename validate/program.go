@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/google/cel-go/cel"
-	options "github.com/nlachfr/protocel/options"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
@@ -40,7 +39,7 @@ func BuildRuleValidater(rule *Rule, envOpt cel.EnvOption) (RuleValidater, error)
 		for _, rawProgram := range rule.Programs {
 			customEnvOpts := envOpts
 			if rule.Options != nil {
-				if macros, err := options.BuildMacros(rule.Options, rawProgram.Expr, customEnvOpts); err != nil {
+				if macros, err := BuildMacros(rule.Options, rawProgram.Expr, customEnvOpts); err != nil {
 					return nil, fmt.Errorf("build macros error: %v", err)
 				} else {
 					customEnvOpts = append(customEnvOpts, cel.Macros(macros...))

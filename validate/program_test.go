@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/google/cel-go/cel"
-	"github.com/nlachfr/protocel/options"
 	"github.com/nlachfr/protocel/testdata/validate"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -44,8 +43,8 @@ func TestBuildRuleValidater(t *testing.T) {
 		{
 			Name: "Unknown field in macro",
 			Rule: &Rule{
-				Options: &options.Options{
-					Globals: &options.Options_Globals{
+				Options: &Options{
+					Globals: &Options_Globals{
 						Functions: map[string]string{
 							"macro": `name == "name"`,
 						},
@@ -59,11 +58,11 @@ func TestBuildRuleValidater(t *testing.T) {
 		{
 			Name: "Regexp error",
 			Rule: &Rule{
-				Options: &options.Options{
-					Overloads: &options.Options_Overloads{
-						Variables: map[string]*options.Options_Overloads_Type{
-							"myVariable": {Type: &options.Options_Overloads_Type_Primitive_{
-								Primitive: options.Options_Overloads_Type_STRING,
+				Options: &Options{
+					Overloads: &Options_Overloads{
+						Variables: map[string]*Options_Overloads_Type{
+							"myVariable": {Type: &Options_Overloads_Type_Primitive_{
+								Primitive: Options_Overloads_Type_STRING,
 							}},
 						},
 					},
@@ -84,8 +83,8 @@ func TestBuildRuleValidater(t *testing.T) {
 		{
 			Name: "OK (with constant)",
 			Rule: &Rule{
-				Options: &options.Options{
-					Globals: &options.Options_Globals{
+				Options: &Options{
+					Globals: &Options_Globals{
 						Constants: map[string]string{
 							"constRef": "ref",
 						},
@@ -99,8 +98,8 @@ func TestBuildRuleValidater(t *testing.T) {
 		{
 			Name: "OK (with macro)",
 			Rule: &Rule{
-				Options: &options.Options{
-					Globals: &options.Options_Globals{
+				Options: &Options{
+					Globals: &Options_Globals{
 						Functions: map[string]string{
 							"rule": `ref`,
 						},
@@ -114,11 +113,11 @@ func TestBuildRuleValidater(t *testing.T) {
 		{
 			Name: "OK (with variable)",
 			Rule: &Rule{
-				Options: &options.Options{
-					Overloads: &options.Options_Overloads{
-						Variables: map[string]*options.Options_Overloads_Type{
-							"myVariable": {Type: &options.Options_Overloads_Type_Primitive_{
-								Primitive: options.Options_Overloads_Type_STRING,
+				Options: &Options{
+					Overloads: &Options_Overloads{
+						Variables: map[string]*Options_Overloads_Type{
+							"myVariable": {Type: &Options_Overloads_Type_Primitive_{
+								Primitive: Options_Overloads_Type_STRING,
 							}},
 						},
 					},
@@ -126,7 +125,7 @@ func TestBuildRuleValidater(t *testing.T) {
 				Programs: []*Rule_Program{{Expr: `ref == myVariable`}},
 			},
 			Desc: (&validate.TestRpcRequest{}).ProtoReflect().Descriptor(),
-			EnvOption: cel.Lib(&options.Library{
+			EnvOption: cel.Lib(&Library{
 				PgrOpts: []cel.ProgramOption{cel.Globals(map[string]interface{}{"myVariable": "ref"})},
 			}),
 			WantErr: false,
@@ -134,13 +133,13 @@ func TestBuildRuleValidater(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			lib := &options.Library{}
+			lib := &Library{}
 			if tt.EnvOption != nil {
 				lib.EnvOpts = append(lib.EnvOpts, tt.EnvOption)
 			}
 			lib.EnvOpts = append(lib.EnvOpts, cel.DeclareContextProto(tt.Desc))
 			if tt.Rule != nil {
-				lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(tt.Rule.Options, tt.Desc))
+				lib.EnvOpts = append(lib.EnvOpts, BuildEnvOption(tt.Rule.Options, tt.Desc))
 			}
 			_, err := BuildRuleValidater(tt.Rule, cel.Lib(lib))
 			if (tt.WantErr && err == nil) || (!tt.WantErr && err != nil) {

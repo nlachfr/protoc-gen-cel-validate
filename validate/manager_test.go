@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
-	"github.com/nlachfr/protocel/options"
 	"github.com/nlachfr/protocel/testdata/validate"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -57,7 +56,7 @@ func TestManagerRegistry(t *testing.T) {
 				return r
 			},
 			Pattern:            "*",
-			Lib:                &options.Library{},
+			Lib:                &Library{},
 			Manager:            mm,
 			WantLoadLibraryErr: true,
 		},
@@ -109,10 +108,10 @@ func TestManager(t *testing.T) {
 		{
 			Name: "OK (const declared in options)",
 			File: validate.File_testdata_validate_manager_proto,
-			Opts: []ManagerOption{WithOptions(&Options{
+			Opts: []ManagerOption{WithConfiguration(&Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"name_const": "name",
 							},
@@ -125,7 +124,7 @@ func TestManager(t *testing.T) {
 		{
 			Name: "OK (const declared in lib)",
 			File: validate.File_testdata_validate_manager_proto,
-			Lib: &options.Library{
+			Lib: &Library{
 				EnvOpts: []cel.EnvOption{
 					cel.Declarations(decls.NewConst(
 						"name_const", decls.String, &expr.Constant{ConstantKind: &expr.Constant_StringValue{StringValue: "name"}},

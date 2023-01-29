@@ -85,7 +85,7 @@ func TestNewServer(t *testing.T) {
 		Name          string
 		Linker        *Linker
 		Config        *Configuration_Server
-		Options       *validate.Options
+		Configuration *validate.Configuration
 		WantNewErr    bool
 		WantListenErr bool
 	}{
@@ -141,7 +141,7 @@ func TestNewServer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			server, err := NewServer(tt.Linker, tt.Config, tt.Options)
+			server, err := NewServer(tt.Linker, tt.Config, tt.Configuration)
 			if (tt.WantNewErr && err == nil) || (!tt.WantNewErr && err != nil) {
 				t.Errorf("wantNewErr %v, got %v", tt.WantNewErr, err)
 			} else if err == nil {

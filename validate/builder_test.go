@@ -3,18 +3,17 @@ package validate
 import (
 	"testing"
 
-	"github.com/nlachfr/protocel/options"
 	"github.com/nlachfr/protocel/testdata/validate"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func TestBuildServiceRuleValidater(t *testing.T) {
 	tests := []struct {
-		Name        string
-		BuildOpts   []ManagerOption
-		Options     *Options
-		ServiceDesc protoreflect.ServiceDescriptor
-		WantErr     bool
+		Name          string
+		BuildOpts     []ManagerOption
+		Configuration *Configuration
+		ServiceDesc   protoreflect.ServiceDescriptor
+		WantErr       bool
 	}{
 		{
 			Name:        "No validation",
@@ -34,10 +33,10 @@ func TestBuildServiceRuleValidater(t *testing.T) {
 		{
 			Name:        "Service level expr with global const",
 			ServiceDesc: validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("ServiceOptions")),
-			Options: &Options{
+			Configuration: &Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"isAdmHdr": "x-is-admin",
 							},
@@ -50,10 +49,10 @@ func TestBuildServiceRuleValidater(t *testing.T) {
 		{
 			Name:        "Service config expr with global const",
 			ServiceDesc: validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("Service")),
-			Options: &Options{
+			Configuration: &Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"isAdmHdr": "x-is-admin",
 							},
@@ -78,10 +77,10 @@ func TestBuildServiceRuleValidater(t *testing.T) {
 		{
 			Name:        "Service level expr with const conflict",
 			ServiceDesc: validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("ServiceLocalOptions")),
-			Options: &Options{
+			Configuration: &Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"isAdmHdr": "x-is-admin",
 							},
@@ -104,10 +103,10 @@ func TestBuildServiceRuleValidater(t *testing.T) {
 		{
 			Name:        "Method level with global const",
 			ServiceDesc: validate.File_testdata_validate_method_proto.Services().ByName(protoreflect.Name("MethodOptions")),
-			Options: &Options{
+			Configuration: &Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"isAdmHdr": "x-is-admin",
 							},
@@ -125,10 +124,10 @@ func TestBuildServiceRuleValidater(t *testing.T) {
 		{
 			Name:        "Method level with const conflict",
 			ServiceDesc: validate.File_testdata_validate_method_proto.Services().ByName(protoreflect.Name("MethodLocalOptions")),
-			Options: &Options{
+			Configuration: &Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"isAdmHdr": "x-is-admin",
 							},
@@ -141,10 +140,10 @@ func TestBuildServiceRuleValidater(t *testing.T) {
 		{
 			Name:        "Method config with const conflict",
 			ServiceDesc: validate.File_testdata_validate_service_proto.Services().ByName(protoreflect.Name("Service")),
-			Options: &Options{
+			Configuration: &Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"isAdmHdr": "x-is-admin",
 							},
@@ -174,7 +173,7 @@ func TestBuildServiceRuleValidater(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			b := newBuilder()
-			b.opts = tt.Options
+			b.opts = tt.Configuration
 			_, err := b.BuildServiceRuleValidater(tt.ServiceDesc)
 			if (tt.WantErr && err == nil) || (!tt.WantErr && err != nil) {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
@@ -185,10 +184,10 @@ func TestBuildServiceRuleValidater(t *testing.T) {
 
 func TestBuildMessageRuleValidater(t *testing.T) {
 	tests := []struct {
-		Name        string
-		Options     *Options
-		MessageDesc protoreflect.MessageDescriptor
-		WantErr     bool
+		Name          string
+		Configuration *Configuration
+		MessageDesc   protoreflect.MessageDescriptor
+		WantErr       bool
 	}{
 		{
 			Name:        "No validation",
@@ -208,10 +207,10 @@ func TestBuildMessageRuleValidater(t *testing.T) {
 		{
 			Name:        "Message level expr with global const",
 			MessageDesc: validate.File_testdata_validate_message_proto.Messages().ByName("MessageOptions"),
-			Options: &Options{
+			Configuration: &Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"emptyName": "",
 							},
@@ -229,10 +228,10 @@ func TestBuildMessageRuleValidater(t *testing.T) {
 		{
 			Name:        "Message level expr with const conflict",
 			MessageDesc: validate.File_testdata_validate_message_proto.Messages().ByName("MessageLocalOptions"),
-			Options: &Options{
+			Configuration: &Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"emptyName": "",
 							},
@@ -245,10 +244,10 @@ func TestBuildMessageRuleValidater(t *testing.T) {
 		{
 			Name:        "Message config expr with const conflict",
 			MessageDesc: validate.File_testdata_validate_message_proto.Messages().ByName("Message"),
-			Options: &Options{
+			Configuration: &Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"emptyName": "",
 							},
@@ -306,10 +305,10 @@ func TestBuildMessageRuleValidater(t *testing.T) {
 		{
 			Name:        "Field level expr with global const",
 			MessageDesc: validate.File_testdata_validate_field_proto.Messages().ByName("FieldOptions"),
-			Options: &Options{
+			Configuration: &Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"emptyName": "",
 							},
@@ -327,10 +326,10 @@ func TestBuildMessageRuleValidater(t *testing.T) {
 		{
 			Name:        "Field level expr with const conflict",
 			MessageDesc: validate.File_testdata_validate_field_proto.Messages().ByName("FieldLocalOptions"),
-			Options: &Options{
+			Configuration: &Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"emptyName": "",
 							},
@@ -343,10 +342,10 @@ func TestBuildMessageRuleValidater(t *testing.T) {
 		{
 			Name:        "Field config expr with const conflict",
 			MessageDesc: validate.File_testdata_validate_message_proto.Messages().ByName("Message"),
-			Options: &Options{
+			Configuration: &Configuration{
 				Rule: &FileRule{
-					Options: &options.Options{
-						Globals: &options.Options_Globals{
+					Options: &Options{
+						Globals: &Options_Globals{
 							Constants: map[string]string{
 								"emptyName": "",
 							},
@@ -369,7 +368,7 @@ func TestBuildMessageRuleValidater(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			b := newBuilder()
-			b.opts = tt.Options
+			b.opts = tt.Configuration
 			_, err := b.BuildMessageRuleValidater(tt.MessageDesc)
 			if (tt.WantErr && err == nil) || (!tt.WantErr && err != nil) {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)

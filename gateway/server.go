@@ -52,7 +52,7 @@ func findServiceUpstream(sd protoreflect.ServiceDescriptor, upstreams map[string
 	return upstream, nil
 }
 
-func NewServer(linker *Linker, serverCfg *Configuration_Server, opts *validate.Options) (*Server, error) {
+func NewServer(linker *Linker, serverCfg *Configuration_Server, opts *validate.Configuration) (*Server, error) {
 	if serverCfg == nil {
 		return nil, fmt.Errorf("nil server config")
 	}
@@ -73,7 +73,7 @@ func NewServer(linker *Linker, serverCfg *Configuration_Server, opts *validate.O
 	wg := &sync.WaitGroup{}
 	if linker != nil {
 		for _, file := range linker.files {
-			manager, err := validate.NewManager(file, validate.WithFallbackOverloads(), validate.WithOptions(opts))
+			manager, err := validate.NewManager(file, validate.WithFallbackOverloads(), validate.WithConfiguration(opts))
 			if err != nil {
 				return nil, err
 			}

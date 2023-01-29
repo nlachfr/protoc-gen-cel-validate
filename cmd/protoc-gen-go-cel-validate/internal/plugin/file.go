@@ -7,11 +7,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func NewFile(p *protogen.Plugin, f *protogen.File, c *validate.Options) (*File, error) {
+func NewFile(p *protogen.Plugin, f *protogen.File, c *validate.Configuration) (*File, error) {
 	g := p.NewGeneratedFile(f.GeneratedFilenamePrefix+".pb.cel.validate.go", f.GoImportPath)
-	cfg := &validate.Options{}
+	cfg := &validate.Configuration{}
 	proto.Merge(cfg, c)
-	manager, err := validate.NewManager(f.Desc, validate.WithOptions(cfg))
+	manager, err := validate.NewManager(f.Desc, validate.WithConfiguration(cfg))
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ type File struct {
 	*protogen.File
 	Services []*Service
 	Messages []*Message
-	Config   *validate.Options
+	Config   *validate.Configuration
 }
 
 func (f *File) Generate() error {
