@@ -1,17 +1,18 @@
-# protocel
-
-[![Coverage](https://coveralls.io/repos/nlachfr/protocel/badge.svg?branch=main&service=github)](https://coveralls.io/github/nlachfr/protocel?branch=main) [![GoReportCard](https://goreportcard.com/badge/github.com/nlachfr/protocel)](https://goreportcard.com/badge/github.com/nlachfr/protocel) ![GitHub](https://img.shields.io/github/license/nlachfr/protocel)
+<div align="center">
+<h1>protocel</h1>
+<p>Enforcing CEL validation rules with protobuf annotations</p>
+<a href="https://coveralls.io/github/nlachfr/protocel?branch=main"><img src="https://coveralls.io/repos/nlachfr/protocel/badge.svg?branch=main&service=github"/></a>
+<a href="https://goreportcard.com/badge/github.com/nlachfr/protocel"><img src="https://goreportcard.com/badge/github.com/nlachfr/protocel"/></a>
+<a href="https://img.shields.io/github/license/nlachfr/protocel"><img src="https://img.shields.io/github/license/nlachfr/protocel"></a>
+</div>
 
 ## About
 
-This repository is a collection of protoc plugins based on the Common Expression Language :
+*This project is a WIP. The APIs should be considered unstable.*
 
-- `protoc-gen-cel-authorize`, a plugin for writing authorization rules (deprecated)
-- `protoc-gen-cel-validate`, a plugin for writing validation rules
+Protocel is a plugin for the protocol buffers compiler. With the help of the Common Expression Language, this plugin reads user-defined rules on service and message definitions and generate ready to use validation rules.
 
-The supported language is [Go](https://go.dev/). More languages may be added in the future, depending on available CEL implementations.
-
-With v0.2.0, the `protoc-gen-cel-validate` plugin features :
+It features :
 
 - complete support of the [CEL specification](https://github.com/google/cel-spec)
 - support of multiple rules
@@ -22,20 +23,28 @@ With v0.2.0, the `protoc-gen-cel-validate` plugin features :
 - support of the `google.api.field_behavior` REQUIRED annotation for enforcing a non default value ([AIP-203](https://google.aip.dev/203))
 - support of the `google.api.resource_reference` annotations for enforcing matching patterns ([AIP-122](https://google.aip.dev/122))
 
-Since `protoc-gen-cel-validate` is able to fully replace `protoc-gen-cel-authorize`, this plugin is now longer maintained.
+This repository contains two utilities :
+
+- `protoc-gen-cel-validate`, the protoc plugin for writing and generating validation rules
+- `protocel-gateway`, a small reverse proxy for handling validation rules without code generation
+
+For now, the plugin is dedicated for the [Go](https://go.dev/). More languages may be added in the future, depending on available CEL implementations (and time). If you would like to add protocel rules in another language, you can still use the `protocel-gateway` for enforcing validation.
 
 > An example is located at [protocel-example](https://github.com/nlachfr/protocel-example) repository.
 ## Installation
 
-For installating the plugin, you can simply run the `go install` command :
+For installating the plugin or the gateway, you can simply run the `go install` command :
 
 ```shell
 go install github.com/nlachfr/protocel/cmd/protoc-gen-go-cel-validate
+go install github.com/nlachfr/protocel/cmd/protocel-gateway
 ```
 
 The binary will be placed in your $GOBIN location.
 
 ## Configuration
+
+
 
 The plugin is highly using protobuf options, configuration file (using the `config=path/to/config.yml` option) or both.
 The configuration can be defined at various levels of the protobuf specification, with the following loading orders :
