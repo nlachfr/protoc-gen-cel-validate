@@ -8,9 +8,9 @@
 
 ## About
 
-*This project is a WIP. The APIs should be considered unstable.*
+*This project is still in alpha: APIs should be considered unstable and likely to change.*
 
-Protocel is a plugin for the protocol buffers compiler. With the help of the Common Expression Language, this plugin reads user-defined rules on service and message definitions and generate ready to use validation rules.
+Protocel is a plugin for the protocol buffers compiler. With the help of the Common Expression Language, this plugin reads user-defined rules on service and message definitions and generate ready to use validation functions.
 
 It features :
 
@@ -28,7 +28,9 @@ This repository contains two utilities :
 - `protoc-gen-cel-validate`, the protoc plugin for writing and generating validation rules
 - `protocel-gateway`, a small reverse proxy for handling validation rules without code generation
 
-For now, the plugin is dedicated for the [Go](https://go.dev/). More languages may be added in the future, depending on available CEL implementations (and time). If you would like to add protocel rules in another language, you can still use the `protocel-gateway` for enforcing validation.
+For now, the plugin is dedicated for the [Go](https://go.dev/) language. More languages may be added in the future, depending on available CEL implementations (and time). 
+
+If you would like to use this project in another language, the `protocel-gateway` is made for you.
 
 ## Installation
 
