@@ -22,7 +22,7 @@ jobs:
       run: go build -v ./cmd/...
 
     - name: Test
-      run: go test -v ./cmd/... ./options/... ./validate/...
+      run: go test -v ./cmd/... ./gateway/... ./options/... ./validate/...
   
   coverage:
     runs-on: ubuntu-latest
@@ -36,7 +36,7 @@ jobs:
         
     - name: Run coverage
       run: |
-        go test -v ./cmd/... ./options/... ./validate/... -cover -coverprofile=.cover
+        go test -v ./cmd/... ./gateway/... ./options/... ./validate/... -cover -coverprofile=.cover
         grep -v .pb.go .cover > coverage.out
     
     - name: Convert coverage to lcov

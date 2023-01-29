@@ -4,7 +4,7 @@ SHELL := env PATH=$(PATH) /bin/bash
 
 PROTOC_GEN_GO := $(GOPATH)/bin/protoc-gen-go
 
-PROTO := authorize/authorize.proto validate/validate.proto options/options.proto
+PROTO := validate/validate.proto options/options.proto gateway/gateway.proto
 GENPROTO_GO := $(PROTO:.proto=.pb.go)
 
 .PHONY: all
@@ -20,7 +20,7 @@ $(PROTOC_GEN_GO):
 go-genproto: $(PROTOC_GEN_GO) $(GENPROTO_GO)
 
 test:
-	go test -count=1 ./cmd/... ./options/... ./validate/...
+	go test -count=1 ./cmd/... ./gateway/... ./options/... ./validate/...
 
 .PHONY: testdata
 testdata:
@@ -28,6 +28,6 @@ testdata:
 	find testdata/ -name '*.pb.go' -exec sed -i "/github.com\/nlachfr\/protocel\/validate/d" {} \; 
 
 coverage:
-	go test -count=1 ./cmd/... ./options/... ./validate/... -cover -coverprofile=.cover.tmp
+	go test -count=1 ./cmd/... ./gateway/... ./options/... ./validate/... -cover -coverprofile=.cover.tmp
 	grep -v .pb.go .cover.tmp > .cover
 	go tool cover -func .cover
