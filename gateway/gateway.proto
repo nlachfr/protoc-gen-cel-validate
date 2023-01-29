@@ -26,5 +26,5 @@ message Configuration {
     }
     repeated Server servers = 1;
     Files files = 2;
-    protocel.validate.Options validate = 10;
+    protocel.validate.Configuration validate = 10;
 }

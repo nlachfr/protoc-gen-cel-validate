@@ -4,7 +4,53 @@ package protocel.validate;
 option go_package = "github.com/nlachfr/protocel/validate";
 
 import "google/protobuf/descriptor.proto";
-import "options/options.proto";
+
+message Options {
+    message Globals {
+        map<string, string> functions = 1;
+        map<string, string> constants = 2;
+    }
+    message Overloads {
+        message Type {
+            enum Primitive {
+                PRIMITIVE_UNSPECIFIED = 0;
+                BOOL = 1;
+                INT = 2;
+                UINT = 3;
+                DOUBLE = 4;
+                BYTES = 5;
+                STRING = 6;
+                DURATION = 7;
+                TIMESTAMP = 8;
+                ERROR = 9;
+                DYN = 10;
+                ANY = 11;
+            }
+            message Array {
+                Type type = 1;
+            }
+            message Map {
+                Type key = 1;
+                Type value = 2;
+            }
+            oneof type {
+                Primitive primitive = 1;
+                string object = 2;
+                Array array = 3;
+                Map map = 4;
+            }
+        }
+        message Function {
+            repeated Type args = 1;
+            Type result = 2;
+        }
+        map<string,Function> functions = 1;
+        map<string,Type> variables = 2;
+    }
+    Globals globals = 1;
+    Overloads overloads = 2;
+    bool stdlib_overriding_enabled = 3;
+}
 
 extend google.protobuf.FileOptions {
     FileRule file = 1178;
@@ -26,20 +72,14 @@ extend google.protobuf.FieldOptions {
     FieldRule field = 1178;
 }
 
-message Options {
-    FileRule rule = 1;
-    bool required_support_disabled = 2;
-    bool resource_reference_support_disabled = 3;
-}
-
 message FileRule {
-    protocel.options.Options options = 1;
+    Options options = 1;
     map<string,ServiceRule> service_rules = 2;
     map<string,MessageRule> message_rules = 3;
 }
 
 message ServiceRule {
-    protocel.options.Options options = 1;
+    Options options = 1;
     Rule rule = 2;
     map<string,MethodRule> method_rules = 3;
 }
@@ -49,7 +89,7 @@ message MethodRule {
 }
 
 message MessageRule {
-    protocel.options.Options options = 1;
+    Options options = 1;
     Rule rule = 2;
     map<string,FieldRule> field_rules = 3;
 }
@@ -63,6 +103,12 @@ message Rule {
         string id = 1;
         string expr = 2;
     }
-    protocel.options.Options options = 1;
+    Options options = 1;
     repeated Program programs = 2;
+}
+
+message Configuration {
+    FileRule rule = 1;
+    bool required_support_disabled = 2;
+    bool resource_reference_support_disabled = 3;
 }

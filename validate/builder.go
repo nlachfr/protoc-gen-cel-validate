@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/google/cel-go/cel"
-	"github.com/nlachfr/protocel/options"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/genproto/googleapis/rpc/context/attribute_context"
 	"google.golang.org/protobuf/proto"
@@ -13,7 +12,7 @@ import (
 
 type builder struct {
 	ob     overloadBuilder
-	opts   *Options
+	opts   *Configuration
 	envOpt cel.EnvOption
 }
 
@@ -23,7 +22,7 @@ func newBuilder() *builder {
 
 func (b *builder) BuildServiceRuleValidater(desc protoreflect.ServiceDescriptor) (ServiceRuleValidater, error) {
 	serviceRule := &ServiceRule{
-		Options: &options.Options{},
+		Options: &Options{},
 	}
 	if b.opts != nil && b.opts.Rule != nil {
 		proto.Merge(serviceRule.Options, b.opts.Rule.Options)
@@ -41,13 +40,13 @@ func (b *builder) BuildServiceRuleValidater(desc protoreflect.ServiceDescriptor)
 		proto.Merge(serviceRule, sr)
 	}
 	rule := &Rule{
-		Options: &options.Options{},
+		Options: &Options{},
 	}
 	proto.Merge(rule.Options, serviceRule.Options)
 	if serviceRule.Rule != nil {
 		proto.Merge(rule, serviceRule.Rule)
 	}
-	lib := &options.Library{}
+	lib := &Library{}
 	if b.envOpt != nil {
 		lib.EnvOpts = append(lib.EnvOpts, b.envOpt)
 	}
@@ -68,7 +67,7 @@ func (b *builder) BuildServiceRuleValidater(desc protoreflect.ServiceDescriptor)
 	}
 	var ruleValidater RuleValidater
 	if len(rule.Programs) > 0 {
-		lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(rule.Options))
+		lib.EnvOpts = append(lib.EnvOpts, BuildEnvOption(rule.Options))
 		if rv, err := BuildRuleValidater(rule, cel.Lib(lib)); err != nil {
 			return nil, err
 		} else {
@@ -83,7 +82,7 @@ func (b *builder) buildMethodRuleValidater(serviceRule *ServiceRule, desc protor
 		return nil, fmt.Errorf("nil desc")
 	}
 	rule := &Rule{
-		Options: &options.Options{},
+		Options: &Options{},
 	}
 	if b.opts != nil && b.opts.Rule != nil {
 		proto.Merge(rule.Options, b.opts.Rule.Options)
@@ -112,7 +111,7 @@ func (b *builder) buildMethodRuleValidater(serviceRule *ServiceRule, desc protor
 	if mr := GetExtension(desc.Options(), E_Method).(*MethodRule); mr != nil {
 		proto.Merge(rule, mr.Rule)
 	}
-	lib := &options.Library{}
+	lib := &Library{}
 	if envOpt != nil {
 		lib.EnvOpts = append(lib.EnvOpts, envOpt)
 	}
@@ -123,7 +122,7 @@ func (b *builder) buildMethodRuleValidater(serviceRule *ServiceRule, desc protor
 		cel.TypeDescs(desc.Input().ParentFile()),
 		cel.Variable("request", cel.ObjectType(string(desc.Input().FullName()))),
 	)
-	lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(rule.Options))
+	lib.EnvOpts = append(lib.EnvOpts, BuildEnvOption(rule.Options))
 	lib.EnvOpts = append(lib.EnvOpts, b.ob.buildOverloads(desc.Input())...)
 	if len(rule.Programs) > 0 {
 		if rv, err := BuildRuleValidater(rule, cel.Lib(lib)); err != nil {
@@ -137,7 +136,7 @@ func (b *builder) buildMethodRuleValidater(serviceRule *ServiceRule, desc protor
 
 func (b *builder) BuildMessageRuleValidater(desc protoreflect.MessageDescriptor) (MessageRuleValidater, error) {
 	messageRule := &MessageRule{
-		Options: &options.Options{},
+		Options: &Options{},
 	}
 	if b.opts != nil && b.opts.Rule != nil {
 		proto.Merge(messageRule.Options, b.opts.Rule.Options)
@@ -155,13 +154,13 @@ func (b *builder) BuildMessageRuleValidater(desc protoreflect.MessageDescriptor)
 		proto.Merge(messageRule, mr)
 	}
 	rule := &Rule{
-		Options: &options.Options{},
+		Options: &Options{},
 	}
 	proto.Merge(rule.Options, messageRule.Options)
 	if messageRule.Rule != nil {
 		proto.Merge(rule, messageRule.Rule)
 	}
-	lib := &options.Library{EnvOpts: []cel.EnvOption{cel.TypeDescs(desc.ParentFile())}}
+	lib := &Library{EnvOpts: []cel.EnvOption{cel.TypeDescs(desc.ParentFile())}}
 	if b.envOpt != nil {
 		lib.EnvOpts = append(lib.EnvOpts, b.envOpt)
 	}
@@ -181,7 +180,7 @@ func (b *builder) BuildMessageRuleValidater(desc protoreflect.MessageDescriptor)
 	}
 	var ruleValidater RuleValidater
 	if len(rule.Programs) > 0 {
-		lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(rule.Options, desc))
+		lib.EnvOpts = append(lib.EnvOpts, BuildEnvOption(rule.Options, desc))
 		if rv, err := BuildRuleValidater(rule, cel.Lib(lib)); err != nil {
 			return nil, err
 		} else {
@@ -196,7 +195,7 @@ func (b *builder) buildFieldRuleValidater(messageRule *MessageRule, desc protore
 		return nil, fmt.Errorf("nil desc")
 	}
 	rule := &Rule{
-		Options: &options.Options{},
+		Options: &Options{},
 	}
 	if b.opts != nil && b.opts.Rule != nil {
 		proto.Merge(rule.Options, b.opts.Rule.Options)
@@ -225,11 +224,11 @@ func (b *builder) buildFieldRuleValidater(messageRule *MessageRule, desc protore
 	if fr := GetExtension(desc.Options(), E_Field).(*FieldRule); fr != nil {
 		proto.Merge(rule, fr.Rule)
 	}
-	lib := &options.Library{}
+	lib := &Library{}
 	if envOpt != nil {
 		lib.EnvOpts = append(lib.EnvOpts, envOpt)
 	}
-	lib.EnvOpts = append(lib.EnvOpts, options.BuildEnvOption(rule.Options, desc.ContainingMessage()))
+	lib.EnvOpts = append(lib.EnvOpts, BuildEnvOption(rule.Options, desc.ContainingMessage()))
 	envOpt = cel.Lib(lib)
 	resourceReferenceMap := GenerateResourceTypePatternMapping(desc)
 	if b.opts == nil || !b.opts.ResourceReferenceSupportDisabled {

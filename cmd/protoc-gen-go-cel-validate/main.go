@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/nlachfr/protocel/cmd/protoc-gen-go-cel-validate/internal/plugin"
-	"github.com/nlachfr/protocel/options"
 	"github.com/nlachfr/protocel/validate"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoregistry"
@@ -19,7 +18,7 @@ var (
 	resourceReferenceSupportDisabled = flag.Bool("resource_reference_support_disabled", false, "disable google.protobuf.resource_reference rules generation")
 )
 
-func loadConfig(config string, c *validate.Options) error {
+func loadConfig(config string, c *validate.Configuration) error {
 	if len(config) > 0 {
 		b, err := os.ReadFile(config)
 		if err != nil {
@@ -36,7 +35,7 @@ func main() {
 	protogen.Options{
 		ParamFunc: flag.CommandLine.Set,
 	}.Run(func(gen *protogen.Plugin) error {
-		c := &validate.Options{}
+		c := &validate.Configuration{}
 		if config != nil {
 			if err := loadConfig(*config, c); err != nil {
 				return err
@@ -46,7 +45,7 @@ func main() {
 			switch f.Name {
 			case "stdlib_overriding_enabled":
 				if c.Rule == nil {
-					c.Rule.Options = &options.Options{}
+					c.Rule.Options = &validate.Options{}
 				}
 				c.Rule.Options.StdlibOverridingEnabled = *stdlibOverridingEnabled
 			case "required_support_disabled":

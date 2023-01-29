@@ -9,7 +9,7 @@ package {{.GoPackageName}}
 {{$file := .}}
 
 var (
-    _{{.GoDescriptorIdent.GoName}}_rawValidateOptions = []byte{
+    _{{.GoDescriptorIdent.GoName}}_rawValidateConfiguration = []byte{
         {{ range $i, $value := (protoMarshal .Config) -}}
         {{ printf "0x%02x, " $value}}{{- if and $i (mod $i 16) }}{{print "\n"}}{{end}}
         {{- end }}
@@ -18,11 +18,11 @@ var (
 )
 
 func init() {
-    opt := &{{validate "Options"}}{}
-    if err := {{proto "Unmarshal"}}(_{{$file.GoDescriptorIdent.GoName}}_rawValidateOptions, opt); err != nil {
+    opt := &{{validate "Configuration"}}{}
+    if err := {{proto "Unmarshal"}}(_{{$file.GoDescriptorIdent.GoName}}_rawValidateConfiguration, opt); err != nil {
         panic(err)
     }
-    vm, err := {{validate "NewManager"}}({{.GoDescriptorIdent.GoName}}, {{validate "WithOptions"}}(opt))
+    vm, err := {{validate "NewManager"}}({{.GoDescriptorIdent.GoName}}, {{validate "WithConfiguration"}}(opt))
     if err != nil {
         panic(err)
     }

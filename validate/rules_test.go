@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/google/cel-go/cel"
-	"github.com/nlachfr/protocel/options"
 	"google.golang.org/genproto/googleapis/rpc/context/attribute_context"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -39,13 +38,13 @@ func TestServiceRuleValidater(t *testing.T) {
 			Name: "Headers map is nil",
 			Validater: func() ServiceRuleValidater {
 				desc := (&timestamppb.Timestamp{}).ProtoReflect().Descriptor()
-				lib := &options.Library{
+				lib := &Library{
 					EnvOpts: []cel.EnvOption{
 						cel.TypeDescs(desc.ParentFile()),
 						cel.TypeDescs(attribute_context.File_google_rpc_context_attribute_context_proto),
 						cel.Variable("request", cel.ObjectType(string(desc.FullName()))),
 						cel.Variable("attribute_context", cel.ObjectType(string((&attribute_context.AttributeContext{}).ProtoReflect().Descriptor().FullName()))),
-						options.BuildEnvOption(nil),
+						BuildEnvOption(nil),
 					},
 				}
 				rv, err := BuildRuleValidater(&Rule{
@@ -68,13 +67,13 @@ func TestServiceRuleValidater(t *testing.T) {
 			Name: "Nil request",
 			Validater: func() ServiceRuleValidater {
 				desc := (&timestamppb.Timestamp{}).ProtoReflect().Descriptor()
-				lib := &options.Library{
+				lib := &Library{
 					EnvOpts: []cel.EnvOption{
 						cel.TypeDescs(desc.ParentFile()),
 						cel.TypeDescs(attribute_context.File_google_rpc_context_attribute_context_proto),
 						cel.Variable("request", cel.ObjectType(string(desc.FullName()))),
 						cel.Variable("attribute_context", cel.ObjectType(string((&attribute_context.AttributeContext{}).ProtoReflect().Descriptor().FullName()))),
-						options.BuildEnvOption(nil),
+						BuildEnvOption(nil),
 					},
 				}
 				rv, err := BuildRuleValidater(&Rule{
@@ -99,13 +98,13 @@ func TestServiceRuleValidater(t *testing.T) {
 			Name: "Attribute context validation failed",
 			Validater: func() ServiceRuleValidater {
 				desc := (&timestamppb.Timestamp{}).ProtoReflect().Descriptor()
-				lib := &options.Library{
+				lib := &Library{
 					EnvOpts: []cel.EnvOption{
 						cel.TypeDescs(desc.ParentFile()),
 						cel.TypeDescs(attribute_context.File_google_rpc_context_attribute_context_proto),
 						cel.Variable("request", cel.ObjectType(string(desc.FullName()))),
 						cel.Variable("attribute_context", cel.ObjectType(string((&attribute_context.AttributeContext{}).ProtoReflect().Descriptor().FullName()))),
-						options.BuildEnvOption(nil),
+						BuildEnvOption(nil),
 					},
 				}
 				rv, err := BuildRuleValidater(&Rule{
@@ -131,13 +130,13 @@ func TestServiceRuleValidater(t *testing.T) {
 			Name: "Request validation failed",
 			Validater: func() ServiceRuleValidater {
 				desc := (&timestamppb.Timestamp{}).ProtoReflect().Descriptor()
-				lib := &options.Library{
+				lib := &Library{
 					EnvOpts: []cel.EnvOption{
 						cel.TypeDescs(desc.ParentFile()),
 						cel.TypeDescs(attribute_context.File_google_rpc_context_attribute_context_proto),
 						cel.Variable("request", cel.ObjectType(string(desc.FullName()))),
 						cel.Variable("attribute_context", cel.ObjectType(string((&attribute_context.AttributeContext{}).ProtoReflect().Descriptor().FullName()))),
-						options.BuildEnvOption(nil),
+						BuildEnvOption(nil),
 					},
 				}
 				rv, err := BuildRuleValidater(&Rule{
@@ -162,13 +161,13 @@ func TestServiceRuleValidater(t *testing.T) {
 			Name: "OK",
 			Validater: func() ServiceRuleValidater {
 				desc := (&timestamppb.Timestamp{}).ProtoReflect().Descriptor()
-				lib := &options.Library{
+				lib := &Library{
 					EnvOpts: []cel.EnvOption{
 						cel.TypeDescs(desc.ParentFile()),
 						cel.TypeDescs(attribute_context.File_google_rpc_context_attribute_context_proto),
 						cel.Variable("request", cel.ObjectType(string(desc.FullName()))),
 						cel.Variable("attribute_context", cel.ObjectType(string((&attribute_context.AttributeContext{}).ProtoReflect().Descriptor().FullName()))),
-						options.BuildEnvOption(nil),
+						BuildEnvOption(nil),
 					},
 				}
 				rv, err := BuildRuleValidater(&Rule{
@@ -214,10 +213,10 @@ func TestMessageRuleValidater(t *testing.T) {
 			Name: "Field rule failure",
 			Validater: func() MessageRuleValidater {
 				desc := (&timestamppb.Timestamp{}).ProtoReflect().Descriptor()
-				lib := &options.Library{
+				lib := &Library{
 					EnvOpts: []cel.EnvOption{
 						cel.DeclareContextProto(desc),
-						options.BuildEnvOption(nil),
+						BuildEnvOption(nil),
 					},
 				}
 				frvs := map[string]FieldRuleValidater{}
@@ -239,10 +238,10 @@ func TestMessageRuleValidater(t *testing.T) {
 			Name: "Field rule failure (required)",
 			Validater: func() MessageRuleValidater {
 				desc := (&timestamppb.Timestamp{}).ProtoReflect().Descriptor()
-				lib := &options.Library{
+				lib := &Library{
 					EnvOpts: []cel.EnvOption{
 						cel.DeclareContextProto(desc),
-						options.BuildEnvOption(nil),
+						BuildEnvOption(nil),
 					},
 				}
 				frvs := map[string]FieldRuleValidater{}
@@ -264,10 +263,10 @@ func TestMessageRuleValidater(t *testing.T) {
 			Name: "Message rule failure",
 			Validater: func() MessageRuleValidater {
 				desc := (&timestamppb.Timestamp{}).ProtoReflect().Descriptor()
-				lib := &options.Library{
+				lib := &Library{
 					EnvOpts: []cel.EnvOption{
 						cel.DeclareContextProto(desc),
-						options.BuildEnvOption(nil),
+						BuildEnvOption(nil),
 					},
 				}
 				rv, err := BuildRuleValidater(&Rule{
@@ -287,10 +286,10 @@ func TestMessageRuleValidater(t *testing.T) {
 			Name: "OK (field rule with nil fieldmask)",
 			Validater: func() MessageRuleValidater {
 				desc := (&timestamppb.Timestamp{}).ProtoReflect().Descriptor()
-				lib := &options.Library{
+				lib := &Library{
 					EnvOpts: []cel.EnvOption{
 						cel.DeclareContextProto(desc),
-						options.BuildEnvOption(nil),
+						BuildEnvOption(nil),
 					},
 				}
 				frvs := map[string]FieldRuleValidater{}
@@ -317,10 +316,10 @@ func TestMessageRuleValidater(t *testing.T) {
 			Name: "OK (field rule with specified fieldmask)",
 			Validater: func() MessageRuleValidater {
 				desc := (&timestamppb.Timestamp{}).ProtoReflect().Descriptor()
-				lib := &options.Library{
+				lib := &Library{
 					EnvOpts: []cel.EnvOption{
 						cel.DeclareContextProto(desc),
-						options.BuildEnvOption(nil),
+						BuildEnvOption(nil),
 					},
 				}
 				frvs := map[string]FieldRuleValidater{}
@@ -348,10 +347,10 @@ func TestMessageRuleValidater(t *testing.T) {
 			Name: "OK (message rule only)",
 			Validater: func() MessageRuleValidater {
 				desc := (&timestamppb.Timestamp{}).ProtoReflect().Descriptor()
-				lib := &options.Library{
+				lib := &Library{
 					EnvOpts: []cel.EnvOption{
 						cel.DeclareContextProto(desc),
-						options.BuildEnvOption(nil),
+						BuildEnvOption(nil),
 					},
 				}
 				rv, err := BuildRuleValidater(&Rule{
@@ -370,10 +369,10 @@ func TestMessageRuleValidater(t *testing.T) {
 			Name: "OK (message rule and field rules)",
 			Validater: func() MessageRuleValidater {
 				desc := (&timestamppb.Timestamp{}).ProtoReflect().Descriptor()
-				lib := &options.Library{
+				lib := &Library{
 					EnvOpts: []cel.EnvOption{
 						cel.DeclareContextProto(desc),
-						options.BuildEnvOption(nil),
+						BuildEnvOption(nil),
 					},
 				}
 				rv, err := BuildRuleValidater(&Rule{
