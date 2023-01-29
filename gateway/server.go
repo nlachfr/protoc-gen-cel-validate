@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/google/cel-go/cel"
 	"github.com/nlachfr/protocel/validate"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -52,7 +53,7 @@ func findServiceUpstream(sd protoreflect.ServiceDescriptor, upstreams map[string
 	return upstream, nil
 }
 
-func NewServer(linker *Linker, serverCfg *Configuration_Server, opts *validate.Configuration) (*Server, error) {
+func NewServer(linker *Linker, serverCfg *Configuration_Server, opts *validate.Configuration, envOpts ...cel.EnvOption) (*Server, error) {
 	if serverCfg == nil {
 		return nil, fmt.Errorf("nil server config")
 	}
@@ -76,6 +77,11 @@ func NewServer(linker *Linker, serverCfg *Configuration_Server, opts *validate.C
 			manager, err := validate.NewManager(file, validate.WithFallbackOverloads(), validate.WithConfiguration(opts))
 			if err != nil {
 				return nil, err
+			}
+			if len(envOpts) > 0 {
+				if err := manager.LoadLibrary(&validate.Library{EnvOpts: envOpts}); err != nil {
+					return nil, err
+				}
 			}
 			for i := 0; i < file.Services().Len(); i++ {
 				sd := file.Services().Get(i)
