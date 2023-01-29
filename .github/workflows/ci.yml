@@ -28,6 +28,7 @@ jobs:
     - uses: actions/cache@v2
       with:
         path: cover.out
+        key: coverage
   
   coverage:
     needs: build
@@ -43,6 +44,7 @@ jobs:
     - uses: actions/cache@v2
       with:
         path: cover.out
+        key: coverage
     
     - name: Convert coverage to lcov
       run: |
