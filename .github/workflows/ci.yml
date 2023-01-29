@@ -23,7 +23,7 @@ jobs:
     - name: Test
       run: |
         go test -v ./cmd/... ./gateway/...  ./validate/... -cover -coverprofile=.cover
-        grep -v .pb.go cover.out > cover.out
+        grep -v .pb.go .cover > cover.out
 
     - uses: actions/cache@v2
       with:
