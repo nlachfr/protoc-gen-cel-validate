@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -57,7 +56,6 @@ func TestLoadPlugins(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			_, err := LoadPlugins(tt.Config)
-			fmt.Println(err)
 			if (tt.WantErr && err == nil) || (!tt.WantErr && err != nil) {
 				t.Errorf("wantErr %v, got %v", tt.WantErr, err)
 			}
