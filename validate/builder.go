@@ -221,8 +221,10 @@ func (b *builder) buildFieldRuleValidater(messageRule *MessageRule, desc protore
 			proto.Merge(rule, fr.Rule)
 		}
 	}
+	required := false
 	if fr := GetExtension(desc.Options(), E_Field).(*FieldRule); fr != nil {
 		proto.Merge(rule, fr.Rule)
+		required = fr.Required
 	}
 	lib := &Library{}
 	if envOpt != nil {
@@ -261,7 +263,6 @@ func (b *builder) buildFieldRuleValidater(messageRule *MessageRule, desc protore
 			}
 		}
 	}
-	required := false
 	if b.opts != nil && !b.opts.RequiredSupportDisabled {
 		for _, behavior := range proto.GetExtension(desc.Options(), annotations.E_FieldBehavior).([]annotations.FieldBehavior) {
 			if behavior == annotations.FieldBehavior_REQUIRED {
