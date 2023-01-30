@@ -96,6 +96,7 @@ message MessageRule {
 
 message FieldRule {
     Rule rule = 1;
+    bool required = 2;
 }
 
 message Rule {
