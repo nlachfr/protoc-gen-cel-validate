@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  vendor: 
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -17,8 +17,48 @@ jobs:
       with:
         go-version: 1.19
 
+    - name: Vendor
+      run: go mod vendor
+
+    - uses: actions/cache@v2
+      with:
+        path: vendor
+        key: vendor
+
+  build:
+    needs: vendor
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+
+    - uses: actions/cache@v2
+      with:
+        path: vendor
+        key: vendor
+
     - name: Build
       run: go build -v ./cmd/...
+
+  test:
+    needs: vendor
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+
+    - uses: actions/cache@v2
+      with:
+        path: vendor
+        key: vendor
 
     - name: Create testdata
       run: make testdata
@@ -34,11 +74,9 @@ jobs:
         key: coverage
   
   coverage:
-    needs: build
+    needs: test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
