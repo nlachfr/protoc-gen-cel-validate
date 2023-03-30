@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package protocel.validate;
-option go_package = "github.com/nlachfr/protocel/validate";
+package cel.validate;
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/validate";
 
 import "google/protobuf/descriptor.proto";
 

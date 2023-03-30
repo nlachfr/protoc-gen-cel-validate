@@ -3,7 +3,7 @@ package plugin
 import (
 	"testing"
 
-	"github.com/nlachfr/protocel/testdata/cmd/plugin"
+	"github.com/nlachfr/protoc-gen-cel-validate/testdata/cmd/plugin"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/pluginpb"

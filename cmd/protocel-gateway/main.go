@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/nlachfr/protocel/gateway"
+	"github.com/nlachfr/protoc-gen-cel-validate/gateway"
 	"gopkg.in/yaml.v3"
 )
 

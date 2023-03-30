@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/cel-go/cel"
-	"github.com/nlachfr/protocel/testdata/validate"
+	"github.com/nlachfr/protoc-gen-cel-validate/testdata/validate"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 

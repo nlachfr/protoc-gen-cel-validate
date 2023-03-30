@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package testdata.cmd.plugin;
-option go_package = "github.com/nlachfr/protocel/testdata/cmd/plugin";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/cmd/plugin";
 
 import "validate/validate.proto";
 import "google/api/field_behavior.proto";
@@ -14,7 +14,7 @@ service BasicService {
 message BasicRequest {
     string name = 1 [
         (google.api.field_behavior) = REQUIRED,
-        (protocel.validate.field) = {
+        (cel.validate.field) = {
             rule: {
                 programs: {
                     expr: 'name.startsWith("names/")'

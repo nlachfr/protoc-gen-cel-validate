@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"github.com/google/cel-go/cel"
-	"github.com/nlachfr/protocel/validate"
+	"github.com/nlachfr/protoc-gen-cel-validate/validate"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/protobuf/reflect/protoreflect"

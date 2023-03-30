@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package testdata;
-option go_package = "github.com/nlachfr/protocel/testdata/validate";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/validate";
 
 import "google/api/resource.proto";
 

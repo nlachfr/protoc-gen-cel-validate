@@ -1,8 +1,8 @@
 package plugin
 
 import (
-	"github.com/nlachfr/protocel/cmd/protoc-gen-go-cel-validate/internal/template"
-	"github.com/nlachfr/protocel/validate"
+	"github.com/nlachfr/protoc-gen-cel-validate/cmd/protoc-gen-go-cel-validate/internal/template"
+	"github.com/nlachfr/protoc-gen-cel-validate/validate"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 )

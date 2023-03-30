@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/google/cel-go/cel"
-	"github.com/nlachfr/protocel/validate"
+	"github.com/nlachfr/protoc-gen-cel-validate/validate"
 )
 
 func New() interface{} {

@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package testdata;
-option go_package = "github.com/nlachfr/protocel/testdata/validate";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/validate";
 
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
@@ -22,7 +22,7 @@ message TestRpcRequest {
     ];
     Nested nested = 2;
     google.protobuf.FieldMask fm = 3;
-    string raw = 4  [(protocel.validate.field).rule = {
+    string raw = 4  [(cel.validate.field).rule = {
         programs: [{
             expr: 'raw != ""'
         }]
@@ -30,7 +30,7 @@ message TestRpcRequest {
 }
 
 message Nested {
-    string name = 1 [(protocel.validate.field).rule = {
+    string name = 1 [(cel.validate.field).rule = {
         programs: [{
             expr: 'name != ""'
         }]
