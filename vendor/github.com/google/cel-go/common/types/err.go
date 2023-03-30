@@ -55,10 +55,6 @@ func NewErr(format string, args ...any) ref.Val {
 	return &Err{fmt.Errorf(format, args...)}
 }
 
-func NewRawErr(err error) ref.Val {
-	return &Err{err}
-}
-
 // NoSuchOverloadErr returns a new types.Err instance with a no such overload message.
 func NoSuchOverloadErr() ref.Val {
 	return celErrNoSuchOverload
@@ -85,8 +81,8 @@ func ValOrErr(val ref.Val, format string, args ...any) ref.Val {
 	return val
 }
 
-// WrapErr wraps an existing Go error value into a CEL Err value.
-func WrapErr(err error) ref.Val {
+// wrapErr wraps an existing Go error value into a CEL Err value.
+func wrapErr(err error) ref.Val {
 	return &Err{error: err}
 }
 
