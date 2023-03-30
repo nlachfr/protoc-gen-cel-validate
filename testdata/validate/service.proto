@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package testdata.validate;
-option go_package = "github.com/nlachfr/protocel/testdata/validate";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/validate";
 
 import "google/protobuf/empty.proto";
 import "validate/validate.proto";
@@ -11,7 +11,7 @@ service Service {
 }
 
 service ServiceExpr {
-    option (protocel.validate.service) = {
+    option (cel.validate.service) = {
         rule: {
             programs: {
                 expr: 'attribute_context.request.headers["x-is-admin"] == "true"'
@@ -22,7 +22,7 @@ service ServiceExpr {
 }
 
 service ServicePeerExpr {
-    option (protocel.validate.service) = {
+    option (cel.validate.service) = {
         rule: {
             programs: {
                 expr: 'attribute_context.origin.ip == "127.0.0.1"'
@@ -33,7 +33,7 @@ service ServicePeerExpr {
 }
 
 service ServiceOptions {
-    option (protocel.validate.service) = {
+    option (cel.validate.service) = {
         rule: {
             programs: {
                 expr: 'attribute_context.request.headers[isAdmHdr] == "true"'
@@ -44,7 +44,7 @@ service ServiceOptions {
 }
 
 service ServiceLocalOptions {
-    option (protocel.validate.service) = {
+    option (cel.validate.service) = {
         rule: {
             options: {
                 globals: {

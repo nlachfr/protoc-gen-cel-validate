@@ -1,14 +1,14 @@
 syntax = "proto3";
 
 package testdata.validate;
-option go_package = "github.com/nlachfr/protocel/testdata/validate";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/validate";
 
 import "google/protobuf/empty.proto";
 import "validate/validate.proto";
 
 service Manager {
     rpc ManagerRpc(ManagerRpcRequest) returns (google.protobuf.Empty) {
-        option (protocel.validate.method) = {
+        option (cel.validate.method) = {
             rule: {
                 programs: {
                     expr: 'request.name == name_const'
@@ -19,7 +19,7 @@ service Manager {
 }
 
 message ManagerRpcRequest {
-    option (protocel.validate.message) = {
+    option (cel.validate.message) = {
         rule : {
             programs: {
                 expr: 'name == name_var'

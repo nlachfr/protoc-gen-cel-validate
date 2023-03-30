@@ -1,14 +1,14 @@
 syntax = "proto3";
 
 package testdata.option;
-option go_package = "github.com/nlachfr/protocel/testdata/validate/option";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/validate/option";
 
 import "google/protobuf/empty.proto";
 import "validate/validate.proto";
 
 service OptionService {
     rpc Option(OptionRequest) returns (google.protobuf.Empty) {
-        option (protocel.validate.method) = {
+        option (cel.validate.method) = {
             rule: {
                 options: {
                     globals: {
@@ -29,7 +29,7 @@ service OptionService {
 }
 
 message OptionRequest {
-    option (protocel.validate.message) = {
+    option (cel.validate.message) = {
         options: {
             globals: {
                 constants: [
@@ -41,7 +41,7 @@ message OptionRequest {
             }
         }
     };
-    string name = 1 [(protocel.validate.field) = {
+    string name = 1 [(cel.validate.field) = {
         rule: {
             programs: {
                 expr: 'name == myMessageConst'

@@ -1,14 +1,14 @@
 syntax = "proto3";
 
 package testdata.cmd.plugin;
-option go_package = "github.com/nlachfr/protocel/testdata/cmd/plugin";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/cmd/plugin";
 
 import "google/protobuf/empty.proto";
 import "validate/validate.proto";
 
 service MethodService {
     rpc Method(MethodRequest) returns (google.protobuf.Empty) {
-        option (protocel.validate.method) = {
+        option (cel.validate.method) = {
             rule: {
                 programs: {
                     expr: 'attribute_context.request.headers["name"] == request.name'

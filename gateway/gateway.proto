@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package protocel.gateway;
-option go_package = "github.com/nlachfr/protocel/gateway";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/gateway";
 
 import "validate/validate.proto";
 
@@ -31,5 +31,5 @@ message Configuration {
     repeated Server servers = 1;
     Files files = 2;
     repeated Plugin plugins = 3;
-    protocel.validate.Configuration validate = 10;
+    cel.validate.Configuration validate = 10;
 }

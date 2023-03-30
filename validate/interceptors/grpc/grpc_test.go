@@ -5,8 +5,8 @@ import (
 	"net"
 	"testing"
 
-	testdata "github.com/nlachfr/protocel/testdata/validate"
-	"github.com/nlachfr/protocel/validate"
+	testdata "github.com/nlachfr/protoc-gen-cel-validate/testdata/validate"
+	"github.com/nlachfr/protoc-gen-cel-validate/validate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"

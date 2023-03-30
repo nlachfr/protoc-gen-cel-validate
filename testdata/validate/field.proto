@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package testdata.validate;
-option go_package = "github.com/nlachfr/protocel/testdata/validate";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/validate";
 
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
@@ -17,7 +17,7 @@ message Field {
 }
 
 message FieldExpr {
-    string name = 1 [(protocel.validate.field).rule = {
+    string name = 1 [(cel.validate.field).rule = {
         programs: {
             expr: 'name != "name"'
         }
@@ -25,12 +25,12 @@ message FieldExpr {
 }
 
 message FieldsExpr {
-    string name = 1 [(protocel.validate.field).rule = {
+    string name = 1 [(cel.validate.field).rule = {
         programs: {
             expr: 'name != "name"'
         }
     }];
-    string display_name = 2 [(protocel.validate.field).rule = {
+    string display_name = 2 [(cel.validate.field).rule = {
         programs: {
             expr: 'display_name != name'
         }
@@ -75,7 +75,7 @@ message FieldRepeatedReferenceType {
 }
 
 message FieldOptions {
-    string name = 1 [(protocel.validate.field).rule = {
+    string name = 1 [(cel.validate.field).rule = {
         programs: {
             expr: 'name != emptyName'
         }
@@ -83,7 +83,7 @@ message FieldOptions {
 }
 
 message FieldLocalOptions {
-    string name = 1 [(protocel.validate.field).rule = {
+    string name = 1 [(cel.validate.field).rule = {
         options: {
             globals: {
                 constants: [{

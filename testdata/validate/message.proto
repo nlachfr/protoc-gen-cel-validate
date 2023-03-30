@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package testdata.validate;
-option go_package = "github.com/nlachfr/protocel/testdata/validate";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/validate";
 
 import "validate/validate.proto";
 
@@ -10,7 +10,7 @@ message Message {
 }
 
 message MessageExpr {
-    option (protocel.validate.message) = {
+    option (cel.validate.message) = {
         rule: {
             programs: {
                 expr: 'name != ""'
@@ -25,7 +25,7 @@ message MessageNested {
 };
 
 message MessageNestedExpr {
-    option (protocel.validate.message) = {
+    option (cel.validate.message) = {
         rule: {
             programs: {
                 expr: 'message_expr.name != ""'
@@ -36,7 +36,7 @@ message MessageNestedExpr {
 };
 
 message MessageOptions {
-    option (protocel.validate.message) = {
+    option (cel.validate.message) = {
         rule: {
             programs: {
                 expr: 'name != emptyName'
@@ -47,7 +47,7 @@ message MessageOptions {
 }
 
 message MessageLocalOptions {
-    option (protocel.validate.message) = {
+    option (cel.validate.message) = {
         rule: {
             options: {
                 globals: {

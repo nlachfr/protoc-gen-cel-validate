@@ -1,12 +1,12 @@
 syntax = "proto3";
 
 package testdata.validate;
-option go_package = "github.com/nlachfr/protocel/testdata/validate";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/validate";
 
 import "google/protobuf/empty.proto";
 import "validate/validate.proto";
 
-option (protocel.validate.file) = {
+option (cel.validate.file) = {
     options: {
         globals: {
             constants: {

@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package testdata.cmd.plugin;
-option go_package = "github.com/nlachfr/protocel/testdata/cmd/plugin";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/cmd/plugin";
 
 import "validate/validate.proto";
 import "google/protobuf/empty.proto";
@@ -12,7 +12,7 @@ service CrossrefService {
 }
 
 message CrossrefRequest {
-    BasicRequest ref = 1 [(protocel.validate.field) = {
+    BasicRequest ref = 1 [(cel.validate.field) = {
         rule: {
             programs: {
                 expr: 'ref.name.startsWith("names/")'

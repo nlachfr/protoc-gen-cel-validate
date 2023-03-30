@@ -1,4 +1,4 @@
-module github.com/nlachfr/protocel
+module github.com/nlachfr/protoc-gen-cel-validate
 
 go 1.19
 

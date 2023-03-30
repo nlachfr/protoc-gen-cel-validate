@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/bufbuild/connect-go"
-	"github.com/nlachfr/protocel/testdata/validate"
+	"github.com/nlachfr/protoc-gen-cel-validate/testdata/validate"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/protobuf/types/dynamicpb"

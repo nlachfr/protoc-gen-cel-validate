@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/bufbuild/connect-go"
-	"github.com/nlachfr/protocel/validate"
+	"github.com/nlachfr/protoc-gen-cel-validate/validate"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 )

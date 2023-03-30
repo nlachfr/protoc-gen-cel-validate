@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package testdata.cmd.plugin;
-option go_package = "github.com/nlachfr/protocel/testdata/cmd/plugin";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/cmd/plugin";
 
 import "validate/validate.proto";
 import "google/protobuf/empty.proto";
@@ -11,7 +11,7 @@ service ErrorService {
 }
 
 message ErrorRequest {
-    string name = 1 [(protocel.validate.field) = {
+    string name = 1 [(cel.validate.field) = {
         rule: {
             programs: {
                 expr: 'name.shouldFail()'

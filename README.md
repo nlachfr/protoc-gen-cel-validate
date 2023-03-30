@@ -1,16 +1,16 @@
 <div align="center">
-<h1>protocel</h1>
+<h1>protoc-gen-cel-validate</h1>
 <p>Enforcing CEL validation rules with protobuf annotations</p>
-<a href="https://coveralls.io/github/nlachfr/protocel?branch=main"><img src="https://coveralls.io/repos/nlachfr/protocel/badge.svg?branch=main&service=github"/></a>
-<a href="https://goreportcard.com/badge/github.com/nlachfr/protocel"><img src="https://goreportcard.com/badge/github.com/nlachfr/protocel"/></a>
-<a href="https://img.shields.io/github/license/nlachfr/protocel"><img src="https://img.shields.io/github/license/nlachfr/protocel"></a>
+<a href="https://coveralls.io/github/nlachfr/protoc-gen-cel-validate?branch=main"><img src="https://coveralls.io/repos/nlachfr/protoc-gen-cel-validate/badge.svg?branch=main&service=github"/></a>
+<a href="https://goreportcard.com/badge/github.com/nlachfr/protoc-gen-cel-validate"><img src="https://goreportcard.com/badge/github.com/nlachfr/protoc-gen-cel-validate"/></a>
+<a href="https://img.shields.io/github/license/nlachfr/protoc-gen-cel-validate"><img src="https://img.shields.io/github/license/nlachfr/protoc-gen-cel-validate"></a>
 </div>
 
 ## About
 
 *This project is still in alpha: APIs should be considered unstable and likely to change.*
 
-Protocel is a plugin for the protocol buffers compiler. With the help of the Common Expression Language, this plugin reads user-defined rules on service and message definitions and generate ready to use validation functions.
+protoc-gen-cel-validate is a plugin for the protocol buffers compiler. With the help of the Common Expression Language, this plugin reads user-defined rules on service and message definitions and generate ready to use validation functions.
 
 It features :
 
@@ -37,15 +37,15 @@ If you would like to use this project in another language, the `protocel-gateway
 For installating the plugin or the gateway, you can simply run the `go install` command :
 
 ```shell
-go install github.com/nlachfr/protocel/cmd/protoc-gen-go-cel-validate
-go install github.com/nlachfr/protocel/cmd/protocel-gateway
+go install github.com/nlachfr/protoc-gen-cel-validate/cmd/protoc-gen-go-cel-validate
+go install github.com/nlachfr/protoc-gen-cel-validate/cmd/protocel-gateway
 ```
 
 The binary will be placed in your $GOBIN location.
 
 ## Rules configuration
 
-Protocel is highly configurable: validation rules can be written using protobuf options, a configuration file or both. 
+protoc-gen-cel-validate is highly configurable: validation rules can be written using protobuf options, a configuration file or both. 
 Furthermore, options can be defined at various levels of your specification, with the following loading orders :
 
 - configuration file > file option > service option > method option
@@ -70,7 +70,7 @@ import "validate/validate.proto";
 import "google/protobuf/empty.proto";
 
 service Example {
-    option (protocel.validate.service) = {
+    option (cel.validate.service) = {
         options: {
             globals: {
                 functions: [{
@@ -85,7 +85,7 @@ service Example {
 }
 
 message RpcRequest {
-    option (protocel.validate.message) = {
+    option (cel.validate.message) = {
         options: {
             globals: {
                 constants: [{
@@ -95,13 +95,13 @@ message RpcRequest {
             }
         }
     };
-    string name = 1 [(protocel.validate.field) = {
+    string name = 1 [(cel.validate.field) = {
         expr: 'name != banned && name == admin'
     }];
 }
 ```
 
-For more information on configuration fields, have a look at the [`protocel.validate.Options`](./validate/validate.proto) message specification.
+For more information on configuration fields, have a look at the [`cel.validate.Options`](./validate/validate.proto) message specification.
 
 ## `protoc-gen-cel-validate`
 
@@ -109,7 +109,7 @@ For more information on configuration fields, have a look at the [`protocel.vali
 
 Even if rules can be written in the protobuf definition, you might not be able to edit the files for your use case. This is why you can use an external file for adding custom validation using the **config=/path/to/config.yml** parameter.
 
-The configuration file will be loaded as a global `protocel.validate.Options` and will be used in all the generated files.
+The configuration file will be loaded as a global `cel.validate.Options` and will be used in all the generated files.
 ### Writing rules
 
 For writing validation rules, some variables are defined, depending on the scope of the rule.
@@ -123,7 +123,7 @@ Furthermore, every message including validation rules provides the `validate()` 
 
 ### Example
 
-> An complete example is located at [protocel-example](https://github.com/nlachfr/protocel-example) repository.
+> An complete example is located at [protocel-example](https://github.com/nlachfr/protoc-gen-cel-validate-example) repository.
 
 1. Create protobuf definition
 
@@ -131,7 +131,7 @@ Furthermore, every message including validation rules provides the `validate()` 
 syntax = "proto3";
 
 package testdata.basic;
-option go_package = "github.com/nlachfr/protocel/testdata/validate/basic";
+option go_package = "github.com/nlachfr/protoc-gen-cel-validate/testdata/validate/basic";
 
 import "validate/validate.proto";
 import "google/api/field_behavior.proto";
@@ -139,14 +139,14 @@ import "google/protobuf/empty.proto";
 
 service BasicService {
     rpc Basic(BasicRequest) returns (google.protobuf.Empty) {
-        option (protocel.validate.method).expr = 'request.validate()';
+        option (cel.validate.method).expr = 'request.validate()';
     };
 }
 
 message BasicRequest {
     string name = 1 [
         (google.api.field_behavior) = REQUIRED,
-        (protocel.validate.field).expr = 'name.startswith("names/")'
+        (cel.validate.field).expr = 'name.startswith("names/")'
     ];
 }
 ```

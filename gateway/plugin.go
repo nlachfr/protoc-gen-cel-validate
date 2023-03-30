@@ -5,7 +5,7 @@ import (
 	"plugin"
 
 	"github.com/google/cel-go/cel"
-	"github.com/nlachfr/protocel/validate"
+	"github.com/nlachfr/protoc-gen-cel-validate/validate"
 )
 
 type Plugin interface {

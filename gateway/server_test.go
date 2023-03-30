@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	tvalidate "github.com/nlachfr/protocel/testdata/validate"
-	"github.com/nlachfr/protocel/validate"
+	tvalidate "github.com/nlachfr/protoc-gen-cel-validate/testdata/validate"
+	"github.com/nlachfr/protoc-gen-cel-validate/validate"
 )
 
 func TestFindServiceUpstream(t *testing.T) {
