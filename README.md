@@ -23,14 +23,9 @@ It features :
 - support of the `google.api.field_behavior` REQUIRED annotation for enforcing a non default value ([AIP-203](https://google.aip.dev/203))
 - support of the `google.api.resource_reference` annotations for enforcing matching patterns ([AIP-122](https://google.aip.dev/122))
 
-This repository contains two utilities :
-
-- `protoc-gen-cel-validate`, the protoc plugin for writing and generating validation rules
-- `protocel-gateway`, a small reverse proxy for handling validation rules without code generation
-
 For now, the plugin is dedicated for the [Go](https://go.dev/) language. More languages may be added in the future, depending on available CEL implementations (and time). 
 
-If you would like to use this project in another language, the `protocel-gateway` is made for you.
+If you would like to integrate CEL rules but you are using another language, you can have a look at the [bifrost](https://github.com/nlachfr/bifrost) proxy.
 
 ## Installation
 
@@ -102,15 +97,12 @@ message RpcRequest {
 ```
 
 For more information on configuration fields, have a look at the [`cel.validate.Options`](./validate/validate.proto) message specification.
-
-## `protoc-gen-cel-validate`
-
-### Configuration file
+## Configuration file
 
 Even if rules can be written in the protobuf definition, you might not be able to edit the files for your use case. This is why you can use an external file for adding custom validation using the **config=/path/to/config.yml** parameter.
 
 The configuration file will be loaded as a global `cel.validate.Options` and will be used in all the generated files.
-### Writing rules
+## Writing rules
 
 For writing validation rules, some variables are defined, depending on the scope of the rule.
 
@@ -121,7 +113,7 @@ For writing validation rules, some variables are defined, depending on the scope
 
 Furthermore, every message including validation rules provides the `validate()` and `validateWithMask(google.protobuf.FieldMask)` methods, allowing nested validation calls.
 
-### Example
+## Example
 
 > An complete example is located at [protocel-example](https://github.com/nlachfr/protoc-gen-cel-validate-example) repository.
 
@@ -153,49 +145,3 @@ message BasicRequest {
 
 2. Generate protobuf code
 3. For validating message, just call the `Validate` or `ValidateWithMask` methods on the corresponding messages. For validating methods of a service, build a `ServiceValidateProgram` using the generated builder and call the `Validate` method.
-
-## `protocel-gateway`
-
-### Configuration file
-
-In order to use the gateway, you must provided a configuration file. It will allows you to :
-- define listening address and upstreams
-- specify proto files location
-- configure protocel validation
-
-All the configuration fields are specified in the [`protocel.gateway.Configuration`](./gateway/gateway.proto) message specification.
-### Example
-
-1. Create your configuration file
-
-```yml
-servers:
-  - listen:
-      - 127.0.0.1:8888
-    upstreams:
-      '*':
-        address: https://demo.connect.build    
-        protocol: grpc
-files:
-  sources:
-    - proto/*.proto
-  imports:
-    - "."
-validate:
-  rule:
-    servicerules:
-      buf.connect.demo.eliza.v1.ElizaService:
-        rule:
-          programs:
-            - expr: 'attribute_context.request.headers["ok"] == "ok"'      
-      connect.ping.v1.PingService:
-        rule:
-          programs:
-            - expr: 'attribute_context.request.headers["ok"] == "ok"'
-```
-
-2. Call protocel-gateway with your newly created configuration
-
-```bash
-$ protocel-gateway -config ./config.yml
-```
